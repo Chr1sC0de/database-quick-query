@@ -1,0 +1,20 @@
+[build-system]
+requires      = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name         = "dbqq"
+version      = "0.1.0"
+dependencies = [
+    "rsa",
+    "pyaml",
+    "polars",
+    "databricks-sql-connector",
+    "pyarrow",
+    "connectorx",
+    "triple_quote_clean @ git+https://github.com/Chr1sC0de/triple-quote-clean.git"
+]
+
+[project.scripts]
+dbqq-write-keys = "dbqq.security._cli_write_keys:cli_write_keys"
+dbqq-encrypt-yaml = "dbqq.security._cli_encrypt_yaml:cli_encrypt_yaml"

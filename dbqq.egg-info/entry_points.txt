@@ -1,0 +1,3 @@
+[console_scripts]
+dbqq-encrypt-yaml = dbqq.security._cli_encrypt_yaml:cli_encrypt_yaml
+dbqq-write-keys = dbqq.security._cli_write_keys:cli_write_keys
