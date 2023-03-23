@@ -144,7 +144,7 @@ class Base(ABC):
 
         metadata_dict = {
             self.meta.QUERY       : query_info.query,
-            self.meta.TIMETAKEN   : query_info.time_taken.seconds,
+            self.meta.TIMETAKEN   : query_info.time_taken.total_seconds(),
             self.meta.PARQUETFILE : output_filename.absolute().as_posix()
         }
 

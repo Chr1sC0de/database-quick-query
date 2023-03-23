@@ -10,6 +10,9 @@
     - [Caching](#caching)
     - [Describing Columns](#describing-columns)
     - [Running Queries from an SQL File](#running-queries-from-an-sql-file)
+    - [Parsing Files](#parsing-files)
+  - [Common Table Expressions](#common-table-expressions)
+    - [Rollback](#rollback)
 
 A wrapper over various database connector libraries for quickly performing
 queries for analysis
@@ -194,3 +197,89 @@ connection.from_file("path to file", *args, **kwargs)
 ```
 
 where `*args`, `**kwargs` are the arguments for a regular `__call__`.
+
+### Parsing Files
+
+For ease of use we may want to include the connector info and name of the query
+in a file, i.e. for automating tasks.
+
+```sql
+--! <NAME>/connectors.oracle.<CONNECTION>
+select * from some_table
+```
+
+```python
+from dbqq import utils
+
+name, query, connection = utils.parse_file("<path to file>")
+```
+
+## Common Table Expressions
+
+We can construct a common table expression with the following method
+
+```python
+from dbqq import utils
+from triple_quote_clean import TripleQuoteCleaner
+
+tqc = TripleQuoteCleaner(skip_top_lines=1)
+
+cte = utils.CommonTableExpression()
+
+cte.add_query(
+    "query_1",
+    """--sql
+        select *
+        from table_1
+    """ >> tqc
+)
+
+cte.add_query(
+    "query_2",
+    """--sql
+        select
+            *
+        from
+            table_2 t2
+        inner join table_1 t1
+            on t1.col1 = t2.col2
+
+    """ >> tqc
+)
+
+print(cte("select * from table_2"))
+```
+
+output
+
+```sql
+with
+query_1 as (
+    select *
+    from table_1
+)
+,
+query_2 as (
+    select
+        *
+    from
+        table_2 t2
+    inner join table_1 t1
+        on t1.col1 = t2.col2
+)
+select * from table_2
+```
+
+### Rollback
+
+When in a jupyter notebook we can rollback queries during the development process
+
+```python
+cte.rollback_one() # or rollback(version_no)
+cte.add_query(
+    query_name,
+    query
+)
+```
+
+this allows us to modify the cte on the fly

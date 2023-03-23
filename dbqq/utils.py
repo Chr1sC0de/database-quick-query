@@ -2,6 +2,7 @@ import re
 import os
 import yaml
 import pathlib as pt
+from collections import OrderedDict
 from . security.helpers import RSA
 from . security.functions._yaml import decrypt
 from triple_quote_clean import TripleQuoteCleaner
@@ -76,3 +77,72 @@ def inject_connector_classes(file_path: pt.Path, configs: dict, connector: str):
         if replaced != content:
             with open(file_path, "w") as f:
                 f.write(replaced)
+
+
+def parse_file(filepath: pt.Path) -> tuple[str, str, "dbqq.connectors.Base"]:
+
+    with open(filepath, "r") as f:
+        query = f.read()
+
+    found = re.findall("--!\s+(\w+)\/(.+)", query)
+
+    assert len(found) > 0, "no connector string found"
+
+    import dbqq
+
+    module = dbqq
+
+    name, connector_string = found[0]
+
+    query = re.sub("--!\s+\w+\/.+\n+", "", query)
+
+    for m in connector_string.split("."):
+        module = getattr(module, m)
+
+    return name, query, module
+
+
+def tab(string, tab="    ", n=1):
+    return "\n".join(
+        [n*tab+s for s in string.split("\n")])
+
+
+def tab2(string):
+    return tab(string, n=2)
+
+
+class CommonTableExpression:
+
+    def __init__(self):
+        self.queries = OrderedDict()
+        # self.queries[name] = query
+        self.history = [self.queries]
+
+    def add_query(self, name, query):
+        self.queries[name] = query
+        self.history.append(self.queries)
+
+    def rollback(self, version_no):
+        self.history = self.history[:(version_no+1)]
+        self.queries = self.history[-1]
+
+    def rollback_one(self):
+        return self.rollback(len(self.history)-1)
+
+    def generate(self):
+        output = "with\n"
+        for i, (name, query) in enumerate(self.queries.items()):
+            if i == 0:
+                output += f"{name} as (\n{tab(query)}\n)"
+            else:
+                output += f"\n,\n{name} as (\n{tab(query)}\n)"
+        return output
+
+    def __call__(self, query):
+        return self.generate() + f"\n{query}"
+
+    def __repr__(self) -> str:
+        return self.generate()
+
+    def __str__(self) -> str:
+        return self.generate()
