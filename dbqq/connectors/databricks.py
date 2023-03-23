@@ -45,7 +45,10 @@ class _DatabricksBase(Base):
 
     connections = []
 
-    def __init__(self, hostname, http_path, access_token):
+    def __init__(
+        self, hostname: str, http_path: str, access_token: str
+    ):
+
         self.connection = databricks_sql.connect(
             server_hostname=hostname,
             http_path=http_path,
@@ -53,19 +56,19 @@ class _DatabricksBase(Base):
         )
         self.cursor = self.connection.cursor()
 
-    def _run_query(self, query, *args, **kwargs):
+    def _run_query(self, query, *args, **kwargs) -> pl.LazyFrame:
         self.cursor.execute(query, *args, **kwargs)
-        return pl.from_arrow(self.cursor.fetchall_arrow())
+        return pl.from_arrow(self.cursor.fetchall_arrow()).lazy()
 
     def close(self):
         self.connection.close()
         self.cursor.close()
 
-    def describe_columns(self, table_name: str):
+    def describe_columns(self, table_name: str) -> pl.LazyFrame:
 
         query = f"describe {table_name}"
 
-        description: pl.DataFrame = self(query)
+        description: pl.LazyFrame = self(query)
 
         description = (
             description
@@ -119,7 +122,6 @@ class _DatabricksBase(Base):
                 ]
             )
         )
-
         description = description.select(
             [pl.col(c) for c in description.columns if c != "COMMENT"]
         )
@@ -138,9 +140,9 @@ class _general_connector(_DatabricksBase):
         args = [connector_config[key] for key in self.targets]
         super().__init__(*args)
 
-## -- begin inject regex
+#! begin inject regex
 
-## -- end inject regex
+#! end inject regex
 
 
 try:

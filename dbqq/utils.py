@@ -53,7 +53,7 @@ def inject_connector_classes(file_path: pt.Path, configs: dict, connector: str):
         with open(file_path, "r") as f:
             content = f.read()
 
-        new_content = "\n## -- begin inject regex\n\n"
+        new_content = "\n#! begin inject regex\n\n"
 
         for key in connector_configs.keys():
 
@@ -64,10 +64,10 @@ def inject_connector_classes(file_path: pt.Path, configs: dict, connector: str):
 
             new_content += "\n\n"
 
-        new_content += "## -- end inject regex"
+        new_content += "#! end inject regex"
 
         replaced = re.sub(
-            "\n## -- begin inject regex.*?## -- end inject regex",
+            "\n#! begin inject regex.*?#! end inject regex",
             new_content,
             content,
             flags=re.S

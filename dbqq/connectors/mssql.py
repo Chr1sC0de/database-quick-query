@@ -77,10 +77,11 @@ class _MSSQLBase(Base):
 
     def _run_query(
         self, query:str, *args,return_type="polars", **kwargs
-    ) -> pl.DataFrame:
+    ) -> pl.LazyFrame:
         try:
             return cx.read_sql(
-                self.connection, query, *args,return_type=return_type, **kwargs)
+                self.connection, query, *args,return_type=return_type, **kwargs
+            ).lazy()
         except RuntimeError:
             raise RuntimeError(query)
 
@@ -100,12 +101,11 @@ class _MSSQLBase(Base):
 
         description = self(query, **kwargs)
 
-        description.columns = [c.upper() for c in description.columns]
+        description = description.rename({c:c.upper() for c in description.columns})
 
         description = description.with_columns(
             pl.col("DATA_TYPE").apply(generic_type_mapper).alias("GENERIC_TYPE")
         )
-
 
         return description
 
@@ -122,9 +122,9 @@ class _general_connector(_MSSQLBase):
         super().__init__(*args)
 
 
-## -- begin inject regex
+#! begin inject regex
 
-## -- end inject regex
+#! end inject regex
 
 try:
 

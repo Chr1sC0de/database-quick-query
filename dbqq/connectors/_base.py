@@ -23,7 +23,7 @@ class Base(ABC):
         name            : str
 
     @abstractmethod
-    def describe_columns(self, table_name: str) -> pl.DataFrame:...
+    def describe_columns(self, table_name: str) -> pl.LazyFrame:...
 
     class meta:
         QUERY       = "query"
@@ -39,7 +39,7 @@ class Base(ABC):
 
     def __call__(
         self, query:str, *args, read_parquet_kwargs=None,**kwargs
-    ) -> pl.DataFrame:
+    ) -> pl.LazyFrame:
 
         if self.to_cache:
             cached_df = self._load_from_cache(
@@ -63,7 +63,7 @@ class Base(ABC):
 
         return df
 
-    def _load_from_cache(self, query, *args, read_parquet_kwargs=None, **kwargs):
+    def _load_from_cache(self, query: str, *args, read_parquet_kwargs:dict=None, **kwargs) -> pl.LazyFrame:
 
         if read_parquet_kwargs is None:
             read_parquet_kwargs = {}
@@ -85,8 +85,6 @@ class Base(ABC):
                     to_dt(f.stat().st_ctime) >= self.cache_metadata.date_lower_bound
             ]
 
-            # files to unlink
-
             [
                 f.unlink() for f in yaml_files if
                     to_dt(f.stat().st_ctime) < self.cache_metadata.date_lower_bound
@@ -101,7 +99,7 @@ class Base(ABC):
                 if query in metadata[self.meta.QUERY]:
                     parquet_file = pt.Path(metadata[self.meta.PARQUETFILE])
                     if parquet_file.exists():
-                        df = pl.read_parquet(parquet_file, **read_parquet_kwargs)
+                        df = pl.scan_parquet(parquet_file, **read_parquet_kwargs)
 
         return df
 
@@ -130,7 +128,7 @@ class Base(ABC):
 
     def _cache_df(
         self,
-        df        : pl.DataFrame,
+        df        : pl.LazyFrame,
         query_info: "QueryInfo"
     ):
 
@@ -153,9 +151,9 @@ class Base(ABC):
         with open(metadata_file, "w") as f:
             yaml.dump(metadata_dict, f)
 
-        df.write_parquet(output_filename, **self.write_parquet_kwargs)
+        df.collect().write_parquet(output_filename, **self.write_parquet_kwargs)
 
-    def _post_query(self, df: pl.DataFrame):
+    def _post_query(self, df: pl.LazyFrame) -> pl.LazyFrame:
         return df
 
     def __enter__ (self):

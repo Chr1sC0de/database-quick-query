@@ -1,9 +1,10 @@
+import os
 import polars as pl
 import connectorx as cx
-from rsa import DecryptionError
 from . _base import Base
-from .. utils import get_connector_details, inject_connector_classes
+from rsa import DecryptionError
 from triple_quote_clean import TripleQuoteCleaner
+from .. utils import get_connector_details, inject_connector_classes
 
 
 tqc = TripleQuoteCleaner(skip_top_lines=1)
@@ -73,11 +74,15 @@ class _OracleBase(Base):
         )
 
     def _run_query(
-        self, query: str, *args, return_type="polars", **kwargs
-    ) -> pl.DataFrame:
+        self, query: str, *args, partition_num=None, **kwargs
+    ) -> pl.LazyFrame:
         try:
+            if partition_num is None:
+                partition_num = os.cpu_count()
             return cx.read_sql(
-                self.connection, query, *args, return_type=return_type, **kwargs)
+                self.connection, query, *args,
+                return_type="polars", partition_num=partition_num, **kwargs
+            ).lazy()
         except RuntimeError:
             raise RuntimeError(query)
 
@@ -169,9 +174,10 @@ class _general_connector(_OracleBase):
         super().__init__(*args)
 
 
-## -- begin inject regex
+#! begin inject regex
 
-## -- end inject regex
+#! end inject regex
+
 
 try:
 
