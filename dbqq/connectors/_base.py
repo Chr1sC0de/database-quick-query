@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 
 class Base(ABC):
 
-    to_cache       : bool = False
+    to_cache: bool = False
 
     @dataclass
     class QueryInfo:
@@ -19,42 +19,45 @@ class Base(ABC):
     @dataclass
     class CacheMetadata:
         date_lower_bound: datetime
-        directory       : pt.Path
-        name            : str
+        directory: pt.Path
+        name: str
 
     @abstractmethod
-    def describe_columns(self, table_name: str) -> pl.LazyFrame:...
+    def describe_columns(self, table_name: str) -> pl.LazyFrame:
+        ...
 
     class meta:
-        QUERY       = "query"
-        TIMETAKEN   = "time_taken"
+        QUERY = "query"
+        TIMETAKEN = "time_taken"
         PARQUETFILE = "parquet_file"
 
-    def from_file(self,sql: pt.Path, *args, **kwargs):
+    def from_file(self, sql: pt.Path, *args, **kwargs):
 
         with open(sql, "r") as f:
-            query = f.read().replace(";","")
+            query = f.read().replace(";", "")
 
         return self(query, *args, **kwargs)
 
     def __call__(
-        self, query:str, *args, read_parquet_kwargs=None,**kwargs
+        self, query: str, *args, read_parquet_kwargs=None, **kwargs
     ) -> pl.LazyFrame:
+
+        self.query_info = self.QueryInfo(None, None)
 
         if self.to_cache:
             cached_df = self._load_from_cache(
-                query, read_parquet_kwargs=read_parquet_kwargs)
+                query, read_parquet_kwargs=read_parquet_kwargs
+            )
             if isinstance(cached_df, (pl.DataFrame, pl.LazyFrame)):
                 return cached_df
 
         start_time = datetime.now()
-        df         = self._run_query(query, *args, **kwargs)
-        end_time   = datetime.now()
-        df         = self._post_query(df)
+        df = self._run_query(query, *args, **kwargs)
+        end_time = datetime.now()
+        df = self._post_query(df)
 
-        self.query_info = self.QueryInfo(
-            query, end_time - start_time
-        )
+        self.query_info.query = query
+        self.query_info.time_taken = (end_time - start_time).total_seconds()
 
         if self.to_cache:
             self._cache_df(df, self.query_info)
@@ -63,7 +66,9 @@ class Base(ABC):
 
         return df
 
-    def _load_from_cache(self, query: str, *args, read_parquet_kwargs:dict=None, **kwargs) -> pl.LazyFrame:
+    def _load_from_cache(
+        self, query: str, *args, read_parquet_kwargs: dict = None, **kwargs
+    ) -> pl.LazyFrame:
 
         if read_parquet_kwargs is None:
             read_parquet_kwargs = {}
@@ -71,25 +76,26 @@ class Base(ABC):
         def to_dt(x):
             return datetime.fromtimestamp(x)
 
-        df    = None
+        df = None
 
-        if hasattr(self,"cache_metadata"):
+        if hasattr(self, "cache_metadata"):
             yaml_files = sorted(
                 list(self.cache_metadata.directory.glob("*yaml")),
-                key=lambda x:x.stat().st_ctime,
-                reverse=True
+                key=lambda x: x.stat().st_ctime,
+                reverse=True,
             )
             # now filter based off the date_lower_bound
             yaml_files = [
-                f for f in yaml_files if
-                    to_dt(f.stat().st_ctime) >= self.cache_metadata.date_lower_bound
+                f
+                for f in yaml_files
+                if to_dt(f.stat().st_ctime) >= self.cache_metadata.date_lower_bound
             ]
 
             [
-                f.unlink() for f in yaml_files if
-                    to_dt(f.stat().st_ctime) < self.cache_metadata.date_lower_bound
+                f.unlink()
+                for f in yaml_files
+                if to_dt(f.stat().st_ctime) < self.cache_metadata.date_lower_bound
             ]
-
 
             for yaml_file in yaml_files:
 
@@ -100,22 +106,24 @@ class Base(ABC):
                     parquet_file = pt.Path(metadata[self.meta.PARQUETFILE])
                     if parquet_file.exists():
                         df = pl.scan_parquet(parquet_file, **read_parquet_kwargs)
+                        self.query_info.time_taken = metadata[self.meta.TIMETAKEN]
+                        self.query_info.query = metadata[self.meta.QUERY]
 
         return df
 
     def cache(
         self,
-        date_lower_bound    : datetime = datetime.min,
-        directory           : pt.Path  = pt.Path(".temp"),
-        name                : str      = None,
-        write_parquet_kwargs: dict     = None,
-        parents             : bool     = True,
-        exists_ok           : bool     = True
+        date_lower_bound: datetime = datetime.min,
+        directory: pt.Path = pt.Path(".temp"),
+        name: str = None,
+        write_parquet_kwargs: dict = None,
+        parents: bool = True,
+        exists_ok: bool = True,
     ):
 
         directory = pt.Path(directory)
 
-        self.to_cache       = True
+        self.to_cache = True
         self.cache_metadata = self.CacheMetadata(date_lower_bound, directory, name)
 
         if write_parquet_kwargs is None:
@@ -126,26 +134,22 @@ class Base(ABC):
         directory.mkdir(parents=parents, exist_ok=exists_ok)
         return self
 
-    def _cache_df(
-        self,
-        df        : pl.LazyFrame,
-        query_info: "QueryInfo"
-    ):
+    def _cache_df(self, df: pl.LazyFrame, query_info: "QueryInfo"):
 
-        if self.cache_metadata.name  is not None:
+        if self.cache_metadata.name is not None:
             file_name = self.cache_metadata.name
         else:
             file_name = uuid1()
 
-        output_filename = self.cache_metadata.directory/("%s.parquet"%file_name)
-        metadata_file   = self.cache_metadata.directory/("%s.yaml"%file_name)
+        output_filename = self.cache_metadata.directory / ("%s.parquet" % file_name)
+        metadata_file = self.cache_metadata.directory / ("%s.yaml" % file_name)
 
         metadata_dict = {}
 
         metadata_dict = {
-            self.meta.QUERY       : query_info.query,
-            self.meta.TIMETAKEN   : query_info.time_taken.total_seconds(),
-            self.meta.PARQUETFILE : output_filename.absolute().as_posix()
+            self.meta.QUERY: query_info.query,
+            self.meta.TIMETAKEN: query_info.time_taken,
+            self.meta.PARQUETFILE: output_filename.absolute().as_posix(),
         }
 
         with open(metadata_file, "w") as f:
@@ -156,7 +160,7 @@ class Base(ABC):
     def _post_query(self, df: pl.LazyFrame) -> pl.LazyFrame:
         return df
 
-    def __enter__ (self):
+    def __enter__(self):
         return self
 
     def __exit__(self, *args, **kwargs):
@@ -164,7 +168,9 @@ class Base(ABC):
         return False
 
     @abstractmethod
-    def _run_query(self): ...
+    def _run_query(self):
+        ...
 
     @abstractmethod
-    def close(self): ...
+    def close(self):
+        ...
