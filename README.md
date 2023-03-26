@@ -13,6 +13,7 @@
     - [Parsing Files](#parsing-files)
   - [Common Table Expressions](#common-table-expressions)
     - [Rollback](#rollback)
+  - [Databricks Development](#databricks-development)
 
 A wrapper over various database connector libraries for quickly performing
 queries for analysis
@@ -283,3 +284,12 @@ cte.add_query(
 ```
 
 this allows us to modify the cte on the fly
+
+## Databricks Development
+
+```python
+connection = dbqq.connectors.databricks.environment()
+if dbqq.utils.in_databricks():
+    connection.spark = spark
+...
+```
