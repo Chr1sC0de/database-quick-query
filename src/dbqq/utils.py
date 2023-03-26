@@ -2,7 +2,6 @@ import re
 import os
 import yaml
 import pathlib as pt
-from typing import Tuple
 from collections import OrderedDict
 from . security.helpers import RSA
 from . security.functions._yaml import decrypt
@@ -10,7 +9,7 @@ from triple_quote_clean import TripleQuoteCleaner
 from . security.functions._functions import load_private_key
 
 
-def get_connector_details() -> "dict[str]":
+def get_connector_details() -> dict[str]:
 
     connector_file = pt.Path(os.getenv("DBQQ_CONNECTORS"))
     assert connector_file.exists(), "%s does not exist" % connector_file
@@ -80,7 +79,7 @@ def inject_connector_classes(file_path: pt.Path, configs: dict, connector: str):
                 f.write(replaced)
 
 
-def parse_file(filepath: pt.Path) -> Tuple[str, str, "dbqq.connectors.Base"]:
+def parse_file(filepath: pt.Path) -> tuple[str, str, "dbqq.connectors.Base"]:
 
     with open(filepath, "r") as f:
         query = f.read()
@@ -110,10 +109,6 @@ def tab(string, tab="    ", n=1):
 
 def tab2(string):
     return tab(string, n=2)
-
-
-def in_databricks():
-    return "DATABRICKS_RUNTIME_VERSION" in os.environ.keys()
 
 
 class CommonTableExpression:

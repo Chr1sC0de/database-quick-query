@@ -62,9 +62,9 @@ def run(
 def encrypt(
     not_encrypted: Union[str, pt.Path, dict],
     rsa_helper: "RSA"
-) -> "EncryptedDict[bytes]":
+) -> EncryptedDict[bytes]:
 
-    def dictionary(d:dict, helper:"RSA") -> "EncryptedDict[bytes]":
+    def dictionary(d:dict, helper:"RSA") -> EncryptedDict[bytes]:
         output = {}
         for k, s in d.items():
 
@@ -80,7 +80,7 @@ def encrypt(
 
         return EncryptedDict(output)
 
-    def file(fpath: Union[str, pt.Path], helper: "RSA") -> "EncryptedDict[bytes]":
+    def file(fpath: Union[str, pt.Path], helper: "RSA") -> EncryptedDict[bytes]:
         with open(fpath, "r") as f:
             contents = yaml.safe_load(f)
         return dictionary(contents, helper)
@@ -91,12 +91,12 @@ def encrypt(
 def decrypt(
     encrypted: Union[str, pt.Path, dict],
     rsa_helper: "RSA"
-) -> "dict[dict[str]]":
+) -> dict[dict[str]]:
 
     def dictionary(
         d     :dict,
         helper:"RSA"
-    ) -> "dict[dict[str]]":
+    ) -> dict[dict[str]]:
 
         output = {}
         for k, s in d.items():
@@ -120,7 +120,7 @@ def decrypt(
     def file(
         f     : Union[str, pt.Path],
         helper: "RSA"
-    ) -> "dict[dict[str]]":
+    ) -> dict[dict[str]]:
 
         def convert_to_bytes(dictionary: dict, bytes_dict:dict):
 

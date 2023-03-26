@@ -51,9 +51,9 @@ class _DatabricksBase(Base):
     def __new__(cls, *args, **kwargs):
 
         if "DATABRICKS_RUNTIME_VERSION" in os.environ.keys():
-            return super(_DatabricksBase, Cluster).__new__(Cluster, *args, **kwargs)
+            return super().__new__(Cluster, *args, **kwargs)
 
-        return super(_DatabricksBase, cls).__new__(cls, *args, **kwargs)
+        return super().__new__(cls,*args, **kwargs)
 
     def __init__(
         self, hostname: str, http_path: str, access_token: str
@@ -143,7 +143,7 @@ class _general_connector(_DatabricksBase):
     targets = ["server_hostname", "http_path", "access_token"]
     source: str
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self):
         configs = get_connector_details()
         databricks_configs = configs["databricks"]
         connector_config = databricks_configs[self.source]
@@ -153,20 +153,16 @@ class _general_connector(_DatabricksBase):
 
 class Cluster(_DatabricksBase):
 
-    def __init__(self, *args, **kwargs):
-        from pyspark.sql import SparkSession
-        self.spark = SparkSession.builder.getOrCreate()
+    def __init__(self, *args, **kwargs):...
 
     def _run_query(self, query, *args, **kwargs) -> pl.LazyFrame:
-        assert self.spark is not None, "set spark attribute for the connection object"
-        df = self.spark.sql(query)
-        return pl.from_arrow(pa.Table.from_batches(df._collect_as_arrow())).lazy()
+        df = spark.sql
+        return pl.from_arrow(pa.Table.from_batches(df._collect_as_arrow()))
 
     def _load_from_cache(*args, **kwargs) -> pl.LazyFrame:
         return
 
-    def cache(self, *args, **kwargs):
-        return self
+    def cache(self, *args, **kwargs): return self
 
     def _cache_df(self):
         return
@@ -189,18 +185,6 @@ class Cluster(_DatabricksBase):
 
 
 #! begin inject regex
-
-class preprod(_general_connector):
-    source: str = 'preprod'
-
-class prod(_general_connector):
-    source: str = 'prod'
-
-class test(_general_connector):
-    source: str = 'test'
-
-class dev(_general_connector):
-    source: str = 'dev'
 
 #! end inject regex
 
