@@ -13,6 +13,7 @@
     - [Parsing Files](#parsing-files)
   - [Common Table Expressions](#common-table-expressions)
     - [Rollback](#rollback)
+  - [Databricks](#databricks)
 
 A wrapper over various database connector libraries for quickly performing
 queries for analysis
@@ -283,3 +284,14 @@ cte.add_query(
 ```
 
 this allows us to modify the cte on the fly
+
+## Databricks
+
+when running on databricks a Cluster object is returned
+
+```python
+connection = dbqq.connectors.databricks.location() # when in databricks a cluster object is returned
+if utils.in_databricks(): # write a function which checks if you are in databricks
+    connection.sql = spark
+...
+```

@@ -1,3 +1,4 @@
+from typing import Tuple
 import rsa
 import pathlib as pt
 
@@ -5,7 +6,7 @@ import pathlib as pt
 def get_keys(
     key_length: int = 1024,
     poolsize  : int = 2
-) -> tuple[rsa.PublicKey, rsa.PrivateKey]:
+) -> Tuple[rsa.PublicKey, rsa.PrivateKey]:
 
     public_key, private_key = rsa.newkeys(key_length, poolsize=poolsize)
 

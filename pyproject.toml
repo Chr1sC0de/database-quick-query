@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name         = "dbqq"
-version      = "0.4.2"
+version      = "0.4.13"
 dependencies = [
     "rsa",
     "pyaml",
@@ -12,7 +12,7 @@ dependencies = [
     "databricks-sql-connector",
     "pyarrow",
     "connectorx",
-    "triple_quote_clean @ git+https://github.com/Chr1sC0de/triple-quote-clean.git"
+    # "triple_quote_clean @ git+https://github.com/Chr1sC0de/triple-quote-clean.git"
 ]
 authors = [
     {name = "Chris Mamon", email="chrisam1993@live.com"}
