@@ -110,6 +110,9 @@ def tab(string, tab="    ", n=1):
 def tab2(string):
     return tab(string, n=2)
 
+def in_databricks():
+    return "DATABRICKS_RUNTIME_VERSION" in os.environ.keys()
+
 
 class CommonTableExpression:
 

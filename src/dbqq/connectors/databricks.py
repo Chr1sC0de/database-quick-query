@@ -153,11 +153,13 @@ class _general_connector(_DatabricksBase):
 
 class Cluster(_DatabricksBase):
 
-    def __init__(self, *args, **kwargs):...
+    def __init__(self, *args, **kwargs):
+        self.spark = None
 
     def _run_query(self, query, *args, **kwargs) -> pl.LazyFrame:
-        df = spark.sql
-        return pl.from_arrow(pa.Table.from_batches(df._collect_as_arrow()))
+        assert self.spark is not None, "spark attribute must be set"
+        df = self.spark.sql(query)
+        return pl.from_arrow(pa.Table.from_batches(df._collect_as_arrow())).lazy()
 
     def _load_from_cache(*args, **kwargs) -> pl.LazyFrame:
         return
