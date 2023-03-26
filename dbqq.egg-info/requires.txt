@@ -1,7 +1,0 @@
-rsa
-pyaml
-polars
-databricks-sql-connector
-pyarrow
-connectorx
-triple_quote_clean@ git+https://github.com/Chr1sC0de/triple-quote-clean.git

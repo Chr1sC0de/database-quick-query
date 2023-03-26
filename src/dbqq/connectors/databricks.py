@@ -1,9 +1,12 @@
+import os
+from datetime import datetime
 import polars as pl
+import pyarrow as pa
 from . _base import Base
 from rsa import DecryptionError
-from .. utils import get_connector_details, inject_connector_classes
 from databricks import sql as databricks_sql
 from triple_quote_clean import TripleQuoteCleaner
+from .. utils import get_connector_details, inject_connector_classes
 
 
 tqc = TripleQuoteCleaner(skip_top_lines=1)
@@ -44,6 +47,13 @@ def generic_type_mapper(type):
 class _DatabricksBase(Base):
 
     connections = []
+
+    def __new__(cls, *args, **kwargs):
+
+        if "DATABRICKS_RUNTIME_VERSION" in os.environ.keys():
+            return super().__new__(Cluster, *args, **kwargs)
+
+        return super().__new__(cls,*args, **kwargs)
 
     def __init__(
         self, hostname: str, http_path: str, access_token: str
@@ -139,6 +149,40 @@ class _general_connector(_DatabricksBase):
         connector_config = databricks_configs[self.source]
         args = [connector_config[key] for key in self.targets]
         super().__init__(*args)
+
+
+class Cluster(_DatabricksBase):
+
+    def __init__(self, *args, **kwargs):...
+
+    def _run_query(self, query, *args, **kwargs) -> pl.LazyFrame:
+        df = spark.sql
+        return pl.from_arrow(pa.Table.from_batches(df._collect_as_arrow()))
+
+    def _load_from_cache(*args, **kwargs) -> pl.LazyFrame:
+        return
+
+    def cache(self, *args, **kwargs): return self
+
+    def _cache_df(self):
+        return
+
+    def __call__(
+        self, query: str, *args, read_parquet_kwargs=None, **kwargs
+    ) -> pl.LazyFrame:
+
+        self.query_info = self.QueryInfo(None, None)
+
+        start_time = datetime.now()
+        df = self._run_query(query, *args, **kwargs)
+        end_time = datetime.now()
+        df = self._post_query(df)
+
+        self.query_info.query = query
+        self.query_info.time_taken = (end_time - start_time).total_seconds()
+
+        return df
+
 
 #! begin inject regex
 

@@ -7,7 +7,7 @@ def main():
     cwd = pt.Path(__file__).parent
 
     required_files = [
-        f for f in(cwd/"dbqq/connectors").glob("*.py") if not f.name.startswith('_')
+        f for f in(cwd/"src/dbqq/connectors").glob("*.py") if not f.name.startswith('_')
     ]
 
     for file in required_files:

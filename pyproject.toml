@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name         = "dbqq"
-version      = "0.3.1"
+version      = "0.4.2"
 dependencies = [
     "rsa",
     "pyaml",
@@ -15,7 +15,7 @@ dependencies = [
     "triple_quote_clean @ git+https://github.com/Chr1sC0de/triple-quote-clean.git"
 ]
 authors = [
-    {name = "Chris Mamon", email="chris.mamon@energyaustralia.com.au"}
+    {name = "Chris Mamon", email="chrisam1993@live.com"}
 ]
 
 [project.scripts]
