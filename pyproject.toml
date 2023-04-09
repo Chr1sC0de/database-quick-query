@@ -21,3 +21,4 @@ authors = [
 [project.scripts]
 dbqq-write-keys = "dbqq.security._cli_write_keys:cli_write_keys"
 dbqq-encrypt-yaml = "dbqq.security._cli_encrypt_yaml:cli_encrypt_yaml"
+dbqq-decrypt-yaml = "dbqq.security._cli_decrypt_yaml:cli_decrypt_yaml"

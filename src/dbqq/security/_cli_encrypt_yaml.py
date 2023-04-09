@@ -11,23 +11,22 @@ parser.add_argument("file", type=pt.Path)
 parser.add_argument(
     "--encrypted_file",
     "-ef",
-    type    = pt.Path,
-    default = None,
-    help = "location to save encrypted file, if none save within current folder"
+    type=pt.Path,
+    default=None,
+    help="location to save encrypted file, if none save within current folder",
 )
 
 parser.add_argument(
-    "public_key",
-    type = pt.Path,
-    help = "location of the public key"
+    "public_key", type=pt.Path, help="location of the public key"
 )
 
 
 def cli_encrypt_yaml():
+    config_file: pt.Path
 
-    args        = parser.parse_args()
+    args = parser.parse_args()
 
-    public_key  = args.public_key
+    public_key = args.public_key
 
     config_file = args.file
 
@@ -38,13 +37,21 @@ def cli_encrypt_yaml():
     encrypted = encrypt(config_file, rsa_helper)
 
     if encrypted_file is None:
-        encrypted_file = config_file.parent/"connections.dbqq"
+        encrypted_file = config_file.parent / "connections.dbqq"
 
     encrypted.dump(encrypted_file)
+
+    v = input("remove raw config file y/n")
+
+    if v.lower() == "y":
+        config_file.unlink()
+    elif v.lower() == "n":
+        pass
+    else:
+        print("invalid option, remove the file manually")
 
     return
 
 
 if __name__ == "__main__":
-
     cli_encrypt_yaml()
