@@ -1,4 +1,2 @@
-from . _base import Base
-from . import databricks
-from . import oracle
-from . import mssql
+from . import databricks, mssql, oracle
+from ._base import Base

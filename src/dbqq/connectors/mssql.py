@@ -1,42 +1,43 @@
 import urllib
-import polars as pl
+
 import connectorx as cx
-from . _base import Base
+import polars as pl
 from rsa import DecryptionError
-from .. utils import get_connector_details, inject_connector_classes
 from triple_quote_clean import TripleQuoteCleaner
 
+from ..utils import get_connector_details, inject_connector_classes
+from ._base import Base
 
 tqc = TripleQuoteCleaner(skip_top_lines=1)
 
 
 GENERIC_TYPE_MAP = {
-    'CHAR'         : 'CHARACTER',
-    'NCHAR'        : 'CHARACTER',
-    'NVARCHAR2'    : 'CHARACTER',
-    'VARCHAR2'     : 'CHARACTER',
-    'LONG'         : 'CHARACTER',
-    'RAW'          : 'CHARACTER',
-    'NUMBER'       : 'NUMERIC',
-    'SCALE'        : 'NUMERIC',
-    'NUMERIC'      : 'NUMERIC',
-    'FLOAT'        : 'NUMERIC',
-    'DEC'          : 'NUMERIC',
-    'DECIMAL'      : 'NUMERIC',
-    'INTEGER'      : 'NUMERIC',
-    'INT'          : 'NUMERIC',
-    'SMALLINT'     : 'NUMERIC',
-    'REAL'         : 'NUMERIC',
-    'DOUBLE'       : 'NUMERIC',
-    'DATE'         : 'DATE/TIME',
-    'TIMESTAMP'    : 'DATE/TIME',
-    'INTERVAL'     : 'DATE/TIME',
-    'INTERVAL YEAR': 'DATE/TIME',
-    'INTERVAL DAY' : 'DATE/TIME',
-    'BFILE'        : 'LOB',
-    'BLOB'         : 'LOB',
-    'CLOB'         : 'LOB',
-    'NCLOB'        : 'LOB',
+    "CHAR": "CHARACTER",
+    "NCHAR": "CHARACTER",
+    "NVARCHAR2": "CHARACTER",
+    "VARCHAR2": "CHARACTER",
+    "LONG": "CHARACTER",
+    "RAW": "CHARACTER",
+    "NUMBER": "NUMERIC",
+    "SCALE": "NUMERIC",
+    "NUMERIC": "NUMERIC",
+    "FLOAT": "NUMERIC",
+    "DEC": "NUMERIC",
+    "DECIMAL": "NUMERIC",
+    "INTEGER": "NUMERIC",
+    "INT": "NUMERIC",
+    "SMALLINT": "NUMERIC",
+    "REAL": "NUMERIC",
+    "DOUBLE": "NUMERIC",
+    "DATE": "DATE/TIME",
+    "TIMESTAMP": "DATE/TIME",
+    "INTERVAL": "DATE/TIME",
+    "INTERVAL YEAR": "DATE/TIME",
+    "INTERVAL DAY": "DATE/TIME",
+    "BFILE": "LOB",
+    "BLOB": "LOB",
+    "CLOB": "LOB",
+    "NCLOB": "LOB",
 }
 
 
@@ -49,45 +50,41 @@ def generic_type_mapper(type):
         for t in GENERIC_TYPE_MAP.keys():
             if t in type:
                 return t
-        return 'UNIDENTIFIED'
+        return "UNIDENTIFIED"
 
 
 class _MSSQLBase(Base):
-
     connections = []
 
-    def __init__(
-        self,
-        username,
-        password,
-        hostname,
-        port,
-        database
-    ):
-
-        self.connection = 'mssql://%s:%s@%s:%s/%s'%(
+    def __init__(self, username, password, hostname, port, database):
+        self.connection = "mssql://%s:%s@%s:%s/%s" % (
             username,
             urllib.parse.quote_plus(password),
             hostname,
             port,
-            database
+            database,
         )
 
-    def close(self): pass
+    def close(self):
+        pass
 
     def _run_query(
-        self, query:str, *args,return_type="polars", **kwargs
+        self, query: str, *args, return_type="polars", **kwargs
     ) -> pl.LazyFrame:
         try:
             return cx.read_sql(
-                self.connection, query, *args,return_type=return_type, **kwargs
+                self.connection,
+                query,
+                *args,
+                return_type=return_type,
+                **kwargs,
             ).lazy()
         except RuntimeError:
             raise RuntimeError(query)
 
     def describe_columns(self, table_name, **kwargs):
-
-        query = f"""--sql
+        query = (
+            f"""--sql
             select
                 c.name,
                 type_name(c.user_type_id) as data_type,
@@ -97,21 +94,27 @@ class _MSSQLBase(Base):
             from sys.tables t
             join sys.columns c on t.object_id = c.object_id
             where t.name = '{table_name.split(".")[-1]}'
-        """ >> tqc
+        """
+            >> tqc
+        )
 
         description = self(query, **kwargs)
 
-        description = description.rename({c:c.upper() for c in description.columns})
+        description = description.rename(
+            {c: c.upper() for c in description.columns}
+        )
 
         description = description.with_columns(
-            pl.col("DATA_TYPE").apply(generic_type_mapper).alias("GENERIC_TYPE")
+            pl.col("DATA_TYPE")
+            .apply(generic_type_mapper)
+            .alias("GENERIC_TYPE")
         )
 
         return description
 
 
 class _general_connector(_MSSQLBase):
-    targets = ["username", "password", "hostname", "port", "database" ]
+    targets = ["username", "password", "hostname", "port", "database"]
     source: str
 
     def __init__(self):
@@ -127,10 +130,9 @@ class _general_connector(_MSSQLBase):
 #! end inject regex
 
 try:
-
     configs = get_connector_details()
 
-    inject_connector_classes(__file__, configs, 'mssql')
+    inject_connector_classes(__file__, configs, "mssql")
 
 except DecryptionError:
     pass

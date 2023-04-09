@@ -1,21 +1,20 @@
-import rsa
 import pathlib as pt
+from typing import Tuple
+
+import rsa
 
 
 def get_keys(
-    key_length: int = 1024,
-    poolsize  : int = 2
-) -> tuple[rsa.PublicKey, rsa.PrivateKey]:
-
+    key_length: int = 1024, poolsize: int = 2
+) -> Tuple[rsa.PublicKey, rsa.PrivateKey]:
     public_key, private_key = rsa.newkeys(key_length, poolsize=poolsize)
 
     return public_key, private_key
 
 
 def write_key(
-    key: rsa.key.AbstractKey, target: pt.Path, format:str="pem"
+    key: rsa.key.AbstractKey, target: pt.Path, format: str = "pem"
 ) -> None:
-
     target = pt.Path(target)
     with open(target, "wb") as f:
         f.write(key.save_pkcs1(format=format.upper()))

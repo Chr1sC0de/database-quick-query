@@ -1,0 +1,41 @@
+import yaml
+import subprocess
+from dbqq.security.functions import yaml as yamled
+from dbqq.utils import get_connector_details
+from dbqq.security import helpers
+
+try:
+    from . shared import db_connectors_yaml, key_folder, encrypted_file
+except ImportError:
+    from shared import db_connectors_yaml, key_folder, encrypted_file
+
+
+def test_get_connector_details():
+
+    subprocess.run(
+        f"dbqq-write-keys \
+            -k 1024 \
+            -l {key_folder} \
+            -pbn public_key \
+            -prn private_key \
+            -f PEM \
+        "
+    )
+
+    rsa_helper = helpers.RSA.from_folder(key_folder)
+
+    with open(db_connectors_yaml, "r") as f:
+
+        config = yaml.safe_load(f)
+
+    yamled.encrypt(db_connectors_yaml, rsa_helper).dump(encrypted_file)
+
+    details = get_connector_details()
+
+    assert config == details, "incorrectly decrypted"
+
+    return
+
+if __name__ == "__main__":
+    test_get_connector_details()
+

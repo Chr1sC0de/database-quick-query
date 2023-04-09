@@ -1,35 +1,36 @@
 import os
 from datetime import datetime
+
 import polars as pl
 import pyarrow as pa
-from . _base import Base
-from rsa import DecryptionError
 from databricks import sql as databricks_sql
+from rsa import DecryptionError
 from triple_quote_clean import TripleQuoteCleaner
-from .. utils import get_connector_details, inject_connector_classes
 
+from ..utils import get_connector_details, inject_connector_classes
+from ._base import Base
 
 tqc = TripleQuoteCleaner(skip_top_lines=1)
 
 
 GENERIC_TYPE_MAP = {
-    'BIGINT': 'NUMERIC',
-    'BINARY': 'NUMERIC',
-    'TINYINT': 'NUMERIC',
-    'DECIMAL': 'NUMERIC',
-    'DOUBLE': 'NUMERIC',
-    'FLOAT': 'NUMERIC',
-    'INT': 'NUMERIC',
-    'SMALLINT': 'NUMERIC',
-    'STRING': 'CHARACTER',
-    'BOOLEAN': 'BOOLEAN',
-    'DATE': 'DATE/TIME',
-    'INTERVAL': 'DATE/TIME',
-    'TIMESTAMP': 'DATE/TIME',
-    'VOID': 'VOID',
-    'ARRAY': 'COMPLEX',
-    'MAP': 'COMPLEX',
-    'STRUCT': 'COMPLEX',
+    "BIGINT": "NUMERIC",
+    "BINARY": "NUMERIC",
+    "TINYINT": "NUMERIC",
+    "DECIMAL": "NUMERIC",
+    "DOUBLE": "NUMERIC",
+    "FLOAT": "NUMERIC",
+    "INT": "NUMERIC",
+    "SMALLINT": "NUMERIC",
+    "STRING": "CHARACTER",
+    "BOOLEAN": "BOOLEAN",
+    "DATE": "DATE/TIME",
+    "INTERVAL": "DATE/TIME",
+    "TIMESTAMP": "DATE/TIME",
+    "VOID": "VOID",
+    "ARRAY": "COMPLEX",
+    "MAP": "COMPLEX",
+    "STRUCT": "COMPLEX",
 }
 
 
@@ -41,28 +42,25 @@ def generic_type_mapper(type):
         for t in GENERIC_TYPE_MAP.keys():
             if t in type:
                 return t
-        return 'UNIDENTIFIED'
+        return "UNIDENTIFIED"
 
 
 class _DatabricksBase(Base):
-
     connections = []
 
     def __new__(cls, *args, **kwargs):
-
         if "DATABRICKS_RUNTIME_VERSION" in os.environ.keys():
-            return super().__new__(Cluster, *args, **kwargs)
+            conn = super().__new__(Cluster, *args, **kwargs)
+            conn.__init__()
+            return conn
 
-        return super().__new__(cls,*args, **kwargs)
+        return super().__new__(cls, *args, **kwargs)
 
-    def __init__(
-        self, hostname: str, http_path: str, access_token: str
-    ):
-
+    def __init__(self, hostname: str, http_path: str, access_token: str):
         self.connection = databricks_sql.connect(
             server_hostname=hostname,
             http_path=http_path,
-            access_token=access_token
+            access_token=access_token,
         )
         self.cursor = self.connection.cursor()
 
@@ -75,60 +73,41 @@ class _DatabricksBase(Base):
         self.cursor.close()
 
     def describe_columns(self, table_name: str) -> pl.LazyFrame:
-
         query = f"describe {table_name}"
 
         description: pl.LazyFrame = self(query)
 
         description = (
-            description
-            .filter(
-                pl.col("col_name")
-                .str
-                .contains("^\#")
-                .is_not()
-            )
+            description.filter(pl.col("col_name").str.contains("^\#").is_not())
             .unique()
-            .rename(
-                {c: c.upper() for c in description.columns}
-            )
-            .with_columns(
-                pl.lit(None).alias("DATA_LENGTH")
-            )
+            .rename({c: c.upper() for c in description.columns})
+            .with_columns(pl.lit(None).alias("DATA_LENGTH"))
             .with_columns(
                 pl.col("DATA_TYPE")
-                .str
-                .extract('[(](\d+),(\d+)[)]', 1)
+                .str.extract("[(](\d+),(\d+)[)]", 1)
                 .cast(pl.Int32)
                 .alias("DATA_PRECISION")
             )
             .with_column(
                 pl.col("DATA_TYPE")
-                .str
-                .extract('[(](\d+),(\d+)[)]', 2)
+                .str.extract("[(](\d+),(\d+)[)]", 2)
                 .cast(pl.Int32)
                 .alias("DATA_SCALE")
             )
-            .with_column(
-                pl.col("DATA_TYPE")
-                .str
-                .extract('\w+', 0)
-            )
+            .with_column(pl.col("DATA_TYPE").str.extract("\w+", 0))
             .with_column(
                 pl.col("DATA_TYPE")
                 .apply(generic_type_mapper)
                 .alias("GENERIC_TYPE")
             )
-            .with_column(
-                pl.col("DATA_TYPE").str.to_uppercase()
-            )
+            .with_column(pl.col("DATA_TYPE").str.to_uppercase())
             .select(
                 [
                     "COL_NAME",
                     "DATA_TYPE",
                     "DATA_LENGTH",
                     "DATA_PRECISION",
-                    "DATA_SCALE"
+                    "DATA_SCALE",
                 ]
             )
         )
@@ -152,19 +131,26 @@ class _general_connector(_DatabricksBase):
 
 
 class Cluster(_DatabricksBase):
-
     def __init__(self, *args, **kwargs):
-        self.spark = None
+        try:
+            from pyspark.sql import SparkSession
+
+            self.spark = SparkSession.builder.getOrCreate()
+        except ImportError:
+            self.spark = None
 
     def _run_query(self, query, *args, **kwargs) -> pl.LazyFrame:
         assert self.spark is not None, "spark attribute must be set"
         df = self.spark.sql(query)
-        return pl.from_arrow(pa.Table.from_batches(df._collect_as_arrow())).lazy()
+        return pl.from_arrow(
+            pa.Table.from_batches(df._collect_as_arrow())
+        ).lazy()
 
     def _load_from_cache(*args, **kwargs) -> pl.LazyFrame:
         return
 
-    def cache(self, *args, **kwargs): return self
+    def cache(self, *args, **kwargs):
+        return self
 
     def _cache_df(self):
         return
@@ -172,7 +158,6 @@ class Cluster(_DatabricksBase):
     def __call__(
         self, query: str, *args, read_parquet_kwargs=None, **kwargs
     ) -> pl.LazyFrame:
-
         self.query_info = self.QueryInfo(None, None)
 
         start_time = datetime.now()
@@ -192,10 +177,9 @@ class Cluster(_DatabricksBase):
 
 
 try:
-
     configs = get_connector_details()
 
-    inject_connector_classes(__file__, configs, 'databricks')
+    inject_connector_classes(__file__, configs, "databricks")
 
 except DecryptionError:
     pass

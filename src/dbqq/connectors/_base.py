@@ -1,14 +1,14 @@
-import yaml
-import polars as pl
 import pathlib as pt
-from uuid import uuid1
-from dataclasses import dataclass
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from datetime import datetime, timedelta
+from uuid import uuid1
+
+import polars as pl
+import yaml
 
 
 class Base(ABC):
-
     to_cache: bool = False
 
     @dataclass
@@ -32,7 +32,6 @@ class Base(ABC):
         PARQUETFILE = "parquet_file"
 
     def from_file(self, sql: pt.Path, *args, **kwargs):
-
         with open(sql, "r") as f:
             query = f.read().replace(";", "")
 
@@ -41,7 +40,6 @@ class Base(ABC):
     def __call__(
         self, query: str, *args, read_parquet_kwargs=None, **kwargs
     ) -> pl.LazyFrame:
-
         self.query_info = self.QueryInfo(None, None)
 
         if self.to_cache:
@@ -62,14 +60,11 @@ class Base(ABC):
         if self.to_cache:
             self._cache_df(df, self.query_info)
 
-        self.to_cache = False
-
         return df
 
     def _load_from_cache(
         self, query: str, *args, read_parquet_kwargs: dict = None, **kwargs
     ) -> pl.LazyFrame:
-
         if read_parquet_kwargs is None:
             read_parquet_kwargs = {}
 
@@ -88,25 +83,30 @@ class Base(ABC):
             yaml_files = [
                 f
                 for f in yaml_files
-                if to_dt(f.stat().st_ctime) >= self.cache_metadata.date_lower_bound
+                if to_dt(f.stat().st_ctime)
+                >= self.cache_metadata.date_lower_bound
             ]
 
             [
                 f.unlink()
                 for f in yaml_files
-                if to_dt(f.stat().st_ctime) < self.cache_metadata.date_lower_bound
+                if to_dt(f.stat().st_ctime)
+                < self.cache_metadata.date_lower_bound
             ]
 
             for yaml_file in yaml_files:
-
                 with open(yaml_file, "r") as f:
                     metadata = yaml.safe_load(f)
 
                 if query in metadata[self.meta.QUERY]:
                     parquet_file = pt.Path(metadata[self.meta.PARQUETFILE])
                     if parquet_file.exists():
-                        df = pl.scan_parquet(parquet_file, **read_parquet_kwargs)
-                        self.query_info.time_taken = metadata[self.meta.TIMETAKEN]
+                        df = pl.scan_parquet(
+                            parquet_file, **read_parquet_kwargs
+                        )
+                        self.query_info.time_taken = metadata[
+                            self.meta.TIMETAKEN
+                        ]
                         self.query_info.query = metadata[self.meta.QUERY]
 
         return df
@@ -120,11 +120,12 @@ class Base(ABC):
         parents: bool = True,
         exists_ok: bool = True,
     ):
-
         directory = pt.Path(directory)
 
         self.to_cache = True
-        self.cache_metadata = self.CacheMetadata(date_lower_bound, directory, name)
+        self.cache_metadata = self.CacheMetadata(
+            date_lower_bound, directory, name
+        )
 
         if write_parquet_kwargs is None:
             write_parquet_kwargs = {}
@@ -135,13 +136,14 @@ class Base(ABC):
         return self
 
     def _cache_df(self, df: pl.LazyFrame, query_info: "QueryInfo"):
-
         if self.cache_metadata.name is not None:
             file_name = self.cache_metadata.name
         else:
             file_name = uuid1()
 
-        output_filename = self.cache_metadata.directory / ("%s.parquet" % file_name)
+        output_filename = self.cache_metadata.directory / (
+            "%s.parquet" % file_name
+        )
         metadata_file = self.cache_metadata.directory / ("%s.yaml" % file_name)
 
         metadata_dict = {}
@@ -155,7 +157,9 @@ class Base(ABC):
         with open(metadata_file, "w") as f:
             yaml.dump(metadata_dict, f)
 
-        df.collect().write_parquet(output_filename, **self.write_parquet_kwargs)
+        df.collect().write_parquet(
+            output_filename, **self.write_parquet_kwargs
+        )
 
     def _post_query(self, df: pl.LazyFrame) -> pl.LazyFrame:
         return df
