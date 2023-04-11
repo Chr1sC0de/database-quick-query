@@ -1,12 +1,24 @@
+import pathlib as pt
+
 from dbqq import utils
 
-def test_parse_file():
+cwd = pt.Path(__file__)
+sql = cwd / "../sql"
 
-    file_path = "./.scratch/test_file.sql"
 
-    name, query, connector = utils.parse_file(file_path)
+class TestParseFile:
+    def test_parse_file(self):
+        file_path = sql / "test_file.sql"
+        output = utils.parse_file(file_path)
+        return
 
-    return
+    def test_parse_file_with_cache(self):
+        file_path = sql / "test_cache.sql"
+        output = utils.parse_file(file_path, cache=True)
+        return
+
 
 if __name__ == "__main__":
-    test_parse_file()
+    T = TestParseFile()
+    T.test_parse_file()
+    T.test_parse_file_with_cache()

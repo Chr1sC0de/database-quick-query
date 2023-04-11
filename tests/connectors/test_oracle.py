@@ -2,9 +2,7 @@ from dbqq import connectors
 
 
 class TestOracle:
-
     def test_infoserver_ret(self):
-
         connection = connectors.oracle.infoserver_gen()
 
         df = connection.cache()("select * from mms.billingfees")

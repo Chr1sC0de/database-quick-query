@@ -88,19 +88,19 @@ class _DatabricksBase(Base):
                 .cast(pl.Int32)
                 .alias("DATA_PRECISION")
             )
-            .with_column(
+            .with_columns(
                 pl.col("DATA_TYPE")
                 .str.extract("[(](\d+),(\d+)[)]", 2)
                 .cast(pl.Int32)
                 .alias("DATA_SCALE")
             )
-            .with_column(pl.col("DATA_TYPE").str.extract("\w+", 0))
-            .with_column(
+            .with_columns(pl.col("DATA_TYPE").str.extract("\w+", 0))
+            .with_columns(
                 pl.col("DATA_TYPE")
                 .apply(generic_type_mapper)
                 .alias("GENERIC_TYPE")
             )
-            .with_column(pl.col("DATA_TYPE").str.to_uppercase())
+            .with_columns(pl.col("DATA_TYPE").str.to_uppercase())
             .select(
                 [
                     "COL_NAME",

@@ -1,17 +1,27 @@
 import re
 import pathlib as pt
 
+import argparse
 
-def main():
+parser = argparse.ArgumentParser(
+    description="Clean up all connection information"
+)
 
+parser.add_argument("-d", "--placeholder")
+
+arguments = parser.parse_args()
+
+
+def run():
     cwd = pt.Path(__file__).parent
 
     required_files = [
-        f for f in(cwd/"src/dbqq/connectors").glob("*.py") if not f.name.startswith('_')
+        f
+        for f in (cwd / "../connectors").glob("*.py")
+        if not f.name.startswith("_")
     ]
 
     for file in required_files:
-
         with open(file, "r") as f:
             content = f.read()
 
@@ -23,7 +33,7 @@ def main():
             "\n#! begin inject regex.*?#! end inject regex",
             new_content,
             content,
-            flags=re.S
+            flags=re.S,
         )
 
         if replaced != content:
@@ -34,4 +44,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    run()

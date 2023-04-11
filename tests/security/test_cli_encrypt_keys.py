@@ -29,7 +29,7 @@ subprocess.run(
     f"dbqq-encrypt-yaml \
         {db_connectors_yaml} \
         {public_key_file} \
-        -ef {encrypted_file}\
+        -l {encrypted_file}\
     "
 )
 
@@ -38,7 +38,7 @@ class TestEncryptKeys:
     rsa_helper = RSA.from_folder(key_folder)
     config = contents
 
-    def test_decrypt_file(self):
+    def test_encrypt_file(self):
         encrypted = dbs.yaml.encrypt(db_connectors_yaml, self.rsa_helper)
 
         encrypted.dump(encrypted_file)
@@ -54,5 +54,4 @@ class TestEncryptKeys:
 
 if __name__ == "__main__":
     T = TestEncryptKeys()
-    T.test_decrypt_file()
-    T.test_decrypt_file()
+    T.test_encrypt_file()

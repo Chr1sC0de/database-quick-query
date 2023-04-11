@@ -4,24 +4,24 @@ import pathlib as pt
 from dbqq.security.functions._yaml import encrypt
 from dbqq.security.helpers import RSA
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(description="encrypt configuration file")
 
-parser.add_argument("file", type=pt.Path)
-
-parser.add_argument(
-    "--encrypted_file",
-    "-ef",
-    type=pt.Path,
-    default=None,
-    help="location to save encrypted file, if none save within current folder",
-)
+parser.add_argument("file", type=pt.Path, help="file to encrypt")
 
 parser.add_argument(
     "public_key", type=pt.Path, help="location of the public key"
 )
 
+parser.add_argument(
+    "--encrypted_file",
+    "-l",
+    type=pt.Path,
+    default=None,
+    help="location to save encrypted file, if none save within current folder",
+)
 
-def cli_encrypt_yaml():
+
+def run():
     config_file: pt.Path
 
     args = parser.parse_args()
@@ -37,21 +37,12 @@ def cli_encrypt_yaml():
     encrypted = encrypt(config_file, rsa_helper)
 
     if encrypted_file is None:
-        encrypted_file = config_file.parent / "connections.dbqq"
+        encrypted_file = config_file.parent / "config.dbqq"
 
     encrypted.dump(encrypted_file)
-
-    v = input("remove raw config file y/n")
-
-    if v.lower() == "y":
-        config_file.unlink()
-    elif v.lower() == "n":
-        pass
-    else:
-        print("invalid option, remove the file manually")
 
     return
 
 
 if __name__ == "__main__":
-    cli_encrypt_yaml()
+    run()

@@ -1,8 +1,7 @@
 import os
 
-from triple_quote_clean import TripleQuoteCleaner
-
 from dbqq import connectors
+from triple_quote_clean import TripleQuoteCleaner
 
 tqc = TripleQuoteCleaner(skip_top_lines=1)
 

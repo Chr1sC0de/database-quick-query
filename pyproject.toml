@@ -4,21 +4,33 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name         = "dbqq"
-version      = "0.4.6"
+version      = "1.0.0"
 dependencies = [
-    "rsa",
-    "pyaml",
-    "polars",
-    "databricks-sql-connector",
-    "pyarrow",
-    "connectorx",
+    "tabulate==0.9.0",
+    "rsa==4.9",
+    "pyaml==21.10.1",
+    "polars==0.16.14",
+    "databricks-sql-connector==2.4.0",
+    "pyarrow==11.0.0",
+    "connectorx==0.3.1",
     "triple-quote-clean"
+]
+classifiers = [
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.7",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
 ]
 authors = [
     {name = "Chris Mamon", email="chrisam1993@live.com"}
 ]
 
 [project.scripts]
-dbqq-write-keys = "dbqq.security._cli_write_keys:cli_write_keys"
-dbqq-encrypt-yaml = "dbqq.security._cli_encrypt_yaml:cli_encrypt_yaml"
-dbqq-decrypt-yaml = "dbqq.security._cli_decrypt_yaml:cli_decrypt_yaml"
+dbqq-write-keys = "dbqq.security.cli.write_keys:run"
+dbqq-encrypt-yaml = "dbqq.security.cli.encrypt_yaml:run"
+dbqq-decrypt-yaml = "dbqq.security.cli.decrypt_yaml:run"
+dbqq-run-sql = "dbqq.cli.run_query:run"
+dbqq-clean-connections = "dbqq.cli.clean_connections:run"

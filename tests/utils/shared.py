@@ -1,13 +1,14 @@
 import pathlib as pt
-import os
 
-cwd              = pt.Path(__file__).parent
-key_folder       = pt.Path(os.getenv("DB_CONNECTOR_KEY_FOLDER"))
-encrypted_file   = pt.Path(os.getenv("DB_CONNECTIONS_ENCRYPTED"))
-public_key_file  = key_folder/"public_key.pem"
-private_key_file = key_folder/"private_key.pem"
+cwd = pt.Path(__file__).parent
 
-db_connectors_yaml = os.getenv("DB_CONNECTOR_CONFIG")
+key_folder = cwd / "../keys"
+db_connectors_yaml = cwd / "../dummy.yaml"
+encrypted_file = cwd / "../dummy.dbqq"
+
+public_key_file = key_folder / "public_key.pem"
+private_key_file = key_folder / "private_key.pem"
+
 
 if not key_folder.exists():
     key_folder.mkdir()
