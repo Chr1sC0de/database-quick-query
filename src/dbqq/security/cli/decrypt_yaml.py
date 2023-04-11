@@ -6,24 +6,26 @@ import yaml
 from dbqq.security.functions._yaml import decrypt
 from dbqq.security.helpers import RSA
 
-parser = argparse.ArgumentParser()
-
-parser.add_argument("file", type=pt.Path)
-
-parser.add_argument(
-    "--decrypted_file",
-    "-df",
-    type=pt.Path,
-    default=None,
-    help="location to save decrypted file, if none save within current folder",
+parser = argparse.ArgumentParser(
+    description="decrypt encrypted configuration file"
 )
+
+parser.add_argument("file", type=pt.Path, help="file to decrypt")
 
 parser.add_argument(
     "private_key", type=pt.Path, help="location of the private key"
 )
 
+parser.add_argument(
+    "--decrypted_file",
+    "-l",
+    type=pt.Path,
+    default=None,
+    help="location to save decrypted file, if none save within current folder",
+)
 
-def cli_decrypt_yaml():
+
+def run():
     args = parser.parse_args()
 
     private_key = args.private_key
@@ -37,7 +39,7 @@ def cli_decrypt_yaml():
     decrypted = decrypt(config_file, rsa_helper)
 
     if decrypted_file is None:
-        decrypted_file = config_file.parent / "connections.yaml"
+        decrypted_file = config_file.parent / "config.yaml"
 
     with open(decrypted_file, "w") as f:
         f.write(yaml.dump(decrypted))
@@ -46,4 +48,4 @@ def cli_decrypt_yaml():
 
 
 if __name__ == "__main__":
-    cli_decrypt_yaml()
+    run()

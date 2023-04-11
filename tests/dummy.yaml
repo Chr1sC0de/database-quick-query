@@ -1,0 +1,53 @@
+databricks:
+  dev:
+    access_token: "*******"
+    http_path: "*******"
+    server_hostname: "*******"
+  test:
+    access_token: "*******"
+    http_path: "*******"
+    server_hostname: "*******"
+  preprod:
+    access_token: "*******"
+    http_path: "*******"
+    server_hostname: "*******"
+  prod:
+    access_token: "*******"
+    http_path: "*******"
+    server_hostname: "*******"
+mssql:
+  conn1:
+    authentication_type: "*******"
+    database: "*******"
+    driver: "*******"
+    hostname: "*******"
+    password: "*******"
+    port: "*******"
+    username: "*******"
+  conn2:
+    authentication_type: "*******"
+    database: "*******"
+    driver: "*******"
+    hostname: "*******"
+    password: "*******"
+    port: "*******"
+    username: "*******"
+oracle:
+  conn1:
+    authentication_type: "*******"
+    connection_type: "*******"
+    database: "*******"
+    hostname: "*******"
+    password: "*******"
+    port: "*******"
+    role: "*******"
+    username: "*******"
+  conn2:
+    authentication_type: "*******"
+    connection_type: "*******"
+    database: "*******"
+    hostname: "*******"
+    password: "*******"
+    port: "*******"
+    role: "*******"
+    username: "*******"

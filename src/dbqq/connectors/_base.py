@@ -1,11 +1,12 @@
+import re
+import yaml
+from .. import utils
+import polars as pl
 import pathlib as pt
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from uuid import uuid1
-
-import polars as pl
-import yaml
 
 
 class Base(ABC):
@@ -31,10 +32,10 @@ class Base(ABC):
         TIMETAKEN = "time_taken"
         PARQUETFILE = "parquet_file"
 
-    def from_file(self, sql: pt.Path, *args, **kwargs):
-        with open(sql, "r") as f:
+    def from_file(self, filepath: pt.Path, *args, **kwargs):
+        with open(filepath, "r") as f:
             query = f.read().replace(";", "")
-
+            query = re.sub("--!.+\n", "")
         return self(query, *args, **kwargs)
 
     def __call__(
@@ -80,7 +81,7 @@ class Base(ABC):
                 reverse=True,
             )
             # now filter based off the date_lower_bound
-            yaml_files = [
+            valid_files = [
                 f
                 for f in yaml_files
                 if to_dt(f.stat().st_ctime)
@@ -88,13 +89,13 @@ class Base(ABC):
             ]
 
             [
-                f.unlink()
+                (f.unlink(), (f.parent / ("%s.parquet" % f.stem)).unlink())
                 for f in yaml_files
                 if to_dt(f.stat().st_ctime)
                 < self.cache_metadata.date_lower_bound
             ]
 
-            for yaml_file in yaml_files:
+            for yaml_file in valid_files:
                 with open(yaml_file, "r") as f:
                     metadata = yaml.safe_load(f)
 

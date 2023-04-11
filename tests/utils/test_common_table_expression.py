@@ -3,8 +3,8 @@ from triple_quote_clean import TripleQuoteCleaner
 
 tqc = TripleQuoteCleaner(skip_top_lines=1)
 
-def test_cte():
 
+def test_cte():
     cte = utils.CommonTableExpression()
 
     cte.add_query(
@@ -12,7 +12,8 @@ def test_cte():
         """--sql
             select *
             from table_1
-        """ >> tqc
+        """
+        >> tqc,
     )
 
     cte.add_query(
@@ -25,7 +26,8 @@ def test_cte():
             inner join table_1 t1
                 on t1.col1 = t2.col2
 
-        """ >> tqc
+        """
+        >> tqc,
     )
 
     print(cte("select * from table_2"))
@@ -35,5 +37,3 @@ def test_cte():
 
 if __name__ == "__main__":
     test_cte()
-
-

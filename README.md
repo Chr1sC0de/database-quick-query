@@ -1,166 +1,256 @@
 # Database Quick Query
 
 - [Database Quick Query](#database-quick-query)
-  - [Basic Configuration](#basic-configuration)
-  - [Encrypting the Configuration File](#encrypting-the-configuration-file)
-    - [Creating public and private keys](#creating-public-and-private-keys)
-    - [Encrypting the config file](#encrypting-the-config-file)
-    - [Setting the Environment Variables for Encrypted Files](#setting-the-environment-variables-for-encrypted-files)
+  - [Environment Variables](#environment-variables)
+  - [Initialization](#initialization)
+  - [Connection Configuration](#connection-configuration)
+  - [Encrypting Configs](#encrypting-configs)
+    - [Creating Private and Public Keys](#creating-private-and-public-keys)
+    - [Encrypting The Configuration File](#encrypting-the-configuration-file)
   - [Connectors](#connectors)
     - [Caching](#caching)
-    - [Describing Columns](#describing-columns)
-    - [Running Queries from an SQL File](#running-queries-from-an-sql-file)
+    - [Getting Basic Table Metadata](#getting-basic-table-metadata)
+    - [Running Queries from a File](#running-queries-from-a-file)
+      - [Extracting queries and connections from a file](#extracting-queries-and-connections-from-a-file)
+        - [Basic Connection No Cache](#basic-connection-no-cache)
+        - [Connection With Cache](#connection-with-cache)
+        - [Connection With Cache and Date Lower Bound](#connection-with-cache-and-date-lower-bound)
     - [Parsing Files](#parsing-files)
   - [Common Table Expressions](#common-table-expressions)
     - [Rollback](#rollback)
   - [Databricks Development](#databricks-development)
+  - [CLI Tools](#cli-tools)
+    - [dbqq-clean-connections](#dbqq-clean-connections)
+    - [dbqq-run-sql](#dbqq-run-sql)
 
 A wrapper over various database connector libraries for quickly performing
-queries for analysis
+queries for analysis. The package leverages [polars](https://www.pola.rs/) and
+[connectorx](https://github.com/sfu-db/connector-x) for their speed when handling Big data.
 
-## Basic Configuration
+## Environment Variables
+
+Example environment variable setup
+
+```powershell
+# path to private key
+$env:DBQQ_PRIVATE_KEY = ".\private_key.pem" or ".\private_key.der" or "none"
+# path to connections, supports encrypted or flat yaml files
+$env:DBQQ_CONNECTORS = ".\connections.dbqq" or ".\connections.yaml"
+# make new connections on import
+$env:DBQQ_MAKE_CONNECTIONS = "true"
+```
+
+## Initialization
+
+Connections are loaded dynamically, and are initially blank within the
+connection files
+
+```python
+# dbqq/connectors/databricks.py etc.
+
+#! begin inject regex
+
+#! end inject regex
+```
+
+To initialize connections, simply import the package
+
+```powershell
+python -c "import dbqq"
+```
+
+As an example, after importing the package the configured connections should now
+be visible within the connection files. The following will be the result of an
+initialization given the configs in the `Connection Configuration` section.
+
+```python
+# dbqq/connectors/databricks.py
+
+#! begin inject regex
+
+class preprod(_general_connector):
+    source: str = 'preprod'
+
+class prod(_general_connector):
+    source: str = 'prod'
+
+class test(_general_connector):
+    source: str = 'test'
+
+class dev(_general_connector):
+    source: str = 'dev'
+
+#! end inject regex
+```
+
+## Connection Configuration
 
 To configure login details for various databases fill out the following required
-details into a `.yaml` file
+details into a `.yaml` (optionally now encrypt the file and delete the yaml)
+and set the environment variable `DBQQ_PRIVATE_KEY` to the location of the file.
 
 ```yaml
-oracle:
-    db1:
-        username: '*******'
-        password: '*******'
-        hostname: '*******'
-        port    : '*******'
-        database: '*******'
-.
-.
-.
-
 databricks:
-    db1:
-      access_token   : '******'
-      server_hostname: '*******'
-      http_path      : '*******'
-
-.
-.
-.
-
+  dev:
+    access_token: "*******"
+    http_path: "*******"
+    server_hostname: "*******"
+  test:
+    access_token: "*******"
+    http_path: "*******"
+    server_hostname: "*******"
+  preprod:
+    access_token: "*******"
+    http_path: "*******"
+    server_hostname: "*******"
+  prod:
+    access_token: "*******"
+    http_path: "*******"
+    server_hostname: "*******"
 mssql:
-    db1:
-        username: '*******'
-        password: '*******'
-        hostname: '*******'
-        port    : '*******'
-        database: '*******'
-
-.
-.
-.
+  conn1:
+    authentication_type: "*******"
+    database: "*******"
+    driver: "*******"
+    hostname: "*******"
+    password: "*******"
+    port: "*******"
+    username: "*******"
+  conn2:
+    authentication_type: "*******"
+    database: "*******"
+    driver: "*******"
+    hostname: "*******"
+    password: "*******"
+    port: "*******"
+    username: "*******"
+oracle:
+  conn1:
+    authentication_type: "*******"
+    connection_type: "*******"
+    database: "*******"
+    hostname: "*******"
+    password: "*******"
+    port: "*******"
+    role: "*******"
+    username: "*******"
+  conn2:
+    authentication_type: "*******"
+    connection_type: "*******"
+    database: "*******"
+    hostname: "*******"
+    password: "*******"
+    port: "*******"
+    role: "*******"
+    username: "*******"
 ```
 
-set the environment variable `DBQQ_CONNECTORS` to the path of the configuration
+> [!todo]
+>
+> add an option to allow users to access private keys from key vault
+> this way no private keys are stored locally only an api key
 
-## Encrypting the Configuration File
+## Encrypting Configs
 
-It might not be the best practice to store and distribute the data as a
-raw yaml file. We can encrypt the data for added security.
+It is probably not the best idea to store passwords as a flat file on your local
+computer. We have added the ability to encrypt configuration files via the
+`dbqq-encrypt-yaml.exe`.
 
-### Creating public and private keys
+### Creating Private and Public Keys
 
-To encrypt the data first create `public` and `private` keys using the
-`dbqq-write-keys` method, find help bellow
+Before we can encrypt our configuration file we need to create both private and
+public keys. For our example let's say we have a working directory
+with the following configuration file
 
 ```powershell
->> dbqq-write-keys.exe --help
+C:\devops> ls
 
-usage: dbqq-write-keys.exe [-h] [--key_length KEY_LENGTH] [--location LOCATION] [--pb_key_name PB_KEY_NAME] [--pr_key_name PR_KEY_NAME] [--format {PEM,DER}] [--poolsize POOLSIZE]
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----                                            config.yaml
 
-optional arguments:
-  -h, --help            show this help message and exit
-  --key_length KEY_LENGTH, -k KEY_LENGTH
-                        the length of th key
-  --location LOCATION, -l LOCATION
-                        the location to save the keys
-  --pb_key_name PB_KEY_NAME, -pbn PB_KEY_NAME
-                        the saved public key name
-  --pr_key_name PR_KEY_NAME, -prn PR_KEY_NAME
-                        the saved private key name
-  --format {PEM,DER}, -f {PEM,DER}
-                        The format the output the keys use PEM for human readable DER for purely binary format
-  --poolsize POOLSIZE, -ps POOLSIZE
-                        number of cores to use
 ```
 
-An example can be found bellow
+create a folder called keys
 
 ```powershell
->> dbqq-write-keys -k 1024 -l {} -pbn {} -f PEM
+C:\devops> mkdir keys
 ```
 
-### Encrypting the config file
-
-After creating the variables we can now encrypt the yaml file. To encrypt the
-yaml file we can use `dbqq-encrypt-yaml`
+we can use the `dbqq-write-keys.exe` method to generate the private and public
+keys
 
 ```powershell
->> dbqq-encrypt-yaml.exe --help
-usage: dbqq-encrypt-yaml.exe [-h] [--encrypted_file ENCRYPTED_FILE] file public_key
-
-positional arguments:
-  file
-  public_key            location of the public key
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --encrypted_file ENCRYPTED_FILE, -ef ENCRYPTED_FILE
-                        location to save encrypted file, if none save within current folder
+C:\devops> dbqq-write-keys -l './keys' -k 1024 # supports der or pem call -h for help
+C:\devops> ls keys
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----                                            private_key.der
+-a----                                            public_key.der
 ```
 
-the file must be saved with the extension `dbqq`
+### Encrypting The Configuration File
 
-### Setting the Environment Variables for Encrypted Files
+Apply `dbqq-encrypt-yaml` on the config file with the generated private key
 
-When the files are encrypted we need to set the `DBQQ_PRIVATE_KEY`
-variable in conjunction with the `DBQQ_CONNECTORS` variable
+```powershell
+
+C:\devops> dbqq-encrypt-yaml 'config.yaml' './keys/private_key.der'
+C:\devops> ls keys
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----                                            config.dbqq
+
+```
+
+Finally secure the private key
 
 ## Connectors
 
 The connectors module reads from the configuration files, categorizing the
-details into (currently) either:
+details into (currently) either an `oracle`, `mssql` or `databricks` connection.
 
-- oracle
-- mssql
-- databricks
-
-for example, creating a connector for oracle using the details from `db1`
+Given our example configuration file we can create an `oracle` to db `conn1` by
+calling:
 
 ```python
+import polars as pl
 from dbqq import connectors
 
 connection = connectors.oracle.db1()
 
 ```
 
-to run a query simply call the connection, remember to close the connection
-after use
-
+to run a query simply call the connection
 
 ```python
-polars_df = connection("select * from schema.table")
-connection.close()
+df: pl.LazyFrame = connection("select * from some.table")
+```
+
+connection calls always return a polars
+[LazyFrame](https://pola-rs.github.io/polars/py-polars/html/reference/lazyframe/index.html).
+This is because LazyFrames allow for whole-query optimisation in addition to
+parallelism, making them the preferred (and highest-performance) mode of
+operation for polars.
+
+Run `collect` to work with a DataFrame or `fetch` to partially collect
+
+```python
+df: pl.Dataframe = df.collect()
 ```
 
 ### Caching
 
-During analysis we may want to cache queries for iteration. This can be
-performed simply by calling the cache method
+During the analysis, we may want to cache queries for iteration. This can be
+performed simply by calling the cache method:
 
 ```python
 connection.cache()("select * from schema.table")
 ```
 
-the data will be saved as a metadata `.yaml` file with a corresponding
-`.parquet` file. Identifier will be generated uniquely unless specified.
+the data will be saved as a `.parquet` file with a corresponding `.yaml` file.
+The cached files will be stored in the `.temp` folder with a unique identifier
+unless specified.
 
 To set the location and name of the cached files
 
@@ -169,8 +259,9 @@ connection.cache(directory="./cache_directory",name="name")(
     "select * from schema.table")
 ```
 
-We might also want to save a new cache every day while clearing out old
-files.
+Finally, we might want to save a new cache every day while clearing out old
+files. This can be done using the `date_lower_bound` keyword argument. Files
+before this date will be deleted for **all** cached queries.
 
 ```python
 from datetime import datetime, timedelta
@@ -180,16 +271,23 @@ connection.cache(
 )("select * from schema.table")
 ```
 
-### Describing Columns
+### Getting Basic Table Metadata
 
-To get information about the columns a `describe_columns` method has been
-implemented.
+To get information about the columns before running the query run the
+`describe_columns` method on the table using the required connection.
 
 ```python
 connection.describe("table_name")
 ```
 
-### Running Queries from an SQL File
+To get the schema of the table call the `schema` attribute on the LazyFrame
+
+```python
+df: pl.LazyFrame = connection("select * from some.table")
+df.schema
+```
+
+### Running Queries from a File
 
 To run a query directly from a file
 
@@ -199,21 +297,65 @@ connection.from_file("path to file", *args, **kwargs)
 
 where `*args`, `**kwargs` are the arguments for a regular `__call__`.
 
-### Parsing Files
+#### Extracting queries and connections from a file
 
-For ease of use we may want to include the connector info and name of the query
-in a file, i.e. for automating tasks.
+We can include metadata to an sql file and call the `connectors.from_file`
+method to extract both a the connection and query. There are 3 ways we can
+include metadata.
+
+##### Basic Connection No Cache
+
+To create a simple connection we can add the following configuration string
+to the sql file.
 
 ```sql
---! <NAME>/connectors.oracle.<CONNECTION>
-select * from some_table
+--! name/connector.{type}.{db}
+select * from some.table
 ```
+
+Replace {} with connection information i.e. databricks.prod.
+
+The configuration string will be removed from the query.
+
+```python
+connection, query = connectors.from_file(filepath)
+df = connection(query)
+
+```
+
+##### Connection With Cache
+
+To create a connection with a path to a cache file add a string to the
+configuration specifying the path to the cache folder. The `name` provided will
+be used as the name of the cache i.e. `name.parquet`. If `name`=`_` then a
+unique identifier will be used as the name for the cache.
+
+```sql
+--! name/"./temp"/connector.{type}.{db}
+select * from some.table
+```
+
+##### Connection With Cache and Date Lower Bound
+
+To add a date lower bound add a command which can be evaluated by python. Note, datetim and timedelta
+are imported during the eval process.
+
+```sql
+--! name/"./temp"/datetime.now()-timedelta(days=7)/connector.{type}.{db}
+select * from some.table
+```
+
+### Parsing Files
+
+We might simply want to parse the files i.e. for automating tasks.
 
 ```python
 from dbqq import utils
 
-name, query, connection = utils.parse_file("<path to file>")
+enum = utils.parse_file("<path to file>")
 ```
+
+enums for parsed sql can be found in connectors.enums.parsed.sql
 
 ## Common Table Expressions
 
@@ -287,9 +429,54 @@ this allows us to modify the cte on the fly
 
 ## Databricks Development
 
+sometimes we may want to develop databricks queries locally, and use spark when
+in databricks.
+
 ```python
-connection = dbqq.connectors.databricks.environment()
-if dbqq.utils.in_databricks():
-    connection.spark = spark
+connection = dbqq.connectors.databricks.prod()
 ...
 ```
+
+when in databricks the connection will be automatically converted into a
+
+```python
+dbqq.connectors.databricks.Cluster
+```
+
+object, which now will use the spark context to run queries.
+
+## CLI Tools
+
+### dbqq-clean-connections
+
+Clean up all the connections, useful for a fresh start
+
+```powershell
+usage: dbqq-clean-connections.exe [-h]
+
+Clean up all connection information
+
+optional arguments:
+  -h, --help  show this help message and exit
+```
+
+### dbqq-run-sql
+
+run the sql with the provided configurations
+
+```powershell
+usage: dbqq-run-sql.exe [-h] [-n ROWS] [-i {0,1}] file
+
+Run a query directly from an file
+
+positional arguments:
+  file                  *.sql file to be run
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -n ROWS, --rows ROWS  the total number of rows to show number, specify 'all' to show all
+  -i {0,1}, --show_index {0,1}
+                        show the index
+```
+
+Combine [parquet to csv](https://github.com/Chr1sC0de/ParquetToCSV) to view/convert the output

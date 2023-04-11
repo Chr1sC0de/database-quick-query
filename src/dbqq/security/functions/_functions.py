@@ -22,11 +22,15 @@ def write_key(
 
 def load_public_key(source: pt.Path) -> rsa.PublicKey:
     with open(source, "rb") as f:
-        public_key = rsa.PublicKey.load_pkcs1(f.read())
+        public_key = rsa.PublicKey.load_pkcs1(
+            f.read(), format=source.suffix.upper().strip(".").upper()
+        )
     return public_key
 
 
 def load_private_key(source: pt.Path) -> rsa.PrivateKey:
     with open(source, "rb") as f:
-        private_key = rsa.PrivateKey.load_pkcs1(f.read())
+        private_key = rsa.PrivateKey.load_pkcs1(
+            f.read(), format=source.suffix.upper().strip(".").upper()
+        )
     return private_key

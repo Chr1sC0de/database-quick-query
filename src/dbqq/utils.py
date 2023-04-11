@@ -2,7 +2,7 @@ import os
 import pathlib as pt
 import re
 from collections import OrderedDict
-from typing import Dict, Tuple
+from typing import Dict
 
 import yaml
 from triple_quote_clean import TripleQuoteCleaner
@@ -10,10 +10,14 @@ from triple_quote_clean import TripleQuoteCleaner
 from .security.functions._functions import load_private_key
 from .security.functions._yaml import decrypt
 from .security.helpers import RSA
+from .enums import parsed
 
 
-def get_connector_details() -> Dict[str, str]:
-    connector_file = pt.Path(os.getenv("DBQQ_CONNECTORS"))
+def get_connector_details(dev_path: pt.Path = None) -> Dict[str, str]:
+    if dev_path is not None:
+        connector_file = pt.Path(dev_path)
+    else:
+        connector_file = pt.Path(os.getenv("DBQQ_CONNECTORS"))
     assert connector_file.exists(), "%s does not exist" % connector_file
 
     if connector_file.suffix == ".yaml":
@@ -84,49 +88,61 @@ def inject_connector_classes(
                 f.write(replaced)
 
 
-def parse_file(
-    filepath: pt.Path, cache=False
-) -> Tuple[str, str, "dbqq.connectors.Base"]:
+def parse_file(filepath: pt.Path, cache: bool = False) -> parsed.sql.Base:
+    def _get_module(connector_string):
+        import dbqq
+
+        module = dbqq
+        for m in connector_string.split("."):
+            module = getattr(module, m)
+        return module
+
+    def _parse_with_cache_and_date(found, query):
+        from datetime import datetime, timedelta
+
+        name, cache_folder, date, connector_string = found[0]
+        cache_folder = pt.Path(cache_folder)
+        date_lower_bound = eval(date)
+        module = _get_module(connector_string)
+        return parsed.sql.NameQueryModuleCacheDate(
+            name, query, module, cache_folder, date_lower_bound
+        )
+
+    def _parse_with_cache(found, query):
+        name, cache_folder, connector_string = found[0]
+        cache_folder = pt.Path(cache_folder)
+        module = _get_module(connector_string)
+        return parsed.sql.NameQueryModuleCache(
+            name, query, module, cache_folder
+        )
+
+    def _parse_no_cache(found, query):
+        name, connector_string = found[0]
+        module = _get_module(connector_string)
+        return parsed.sql.NameQueryModule(name, query, module)
+
     with open(filepath, "r") as f:
         query = f.read()
 
-    if not cache:
-        found = re.findall("--!\s+(\w+)\/(.+)", query)
+    found_cache_with_date = re.findall(
+        "--!\s+(\w+)\/['\"](.+)['\"]\/(.+?)\/(.+)", query
+    )
+    found_cache = re.findall("--!\s+(.+?)\/['\"](.+)['\"]\/(.+)", query)
+    found_no_cache = re.findall("--!\s+(\w+)\/(.+)", query)
 
-        assert len(found) > 0, "no connector string found"
+    query = re.sub("--!.+\n", "", query)
 
-        import dbqq
-
-        module = dbqq
-
-        name, connector_string = found[0]
-
-        query = re.sub("--!\s+\w+\/.+\n+", "", query)
-
-        for m in connector_string.split("."):
-            module = getattr(module, m)
-
-        return name, query, module
+    if len(found_cache_with_date) > 0:
+        return _parse_with_cache_and_date(found_cache_with_date, query)
+    elif len(found_cache) > 0:
+        return _parse_with_cache(found_cache, query)
+    elif len(found_no_cache) > 0:
+        return _parse_no_cache(found_no_cache, query)
     else:
-        found = re.findall("--!\s+(\w+)\/(.+)\/(.+)\/(.+)", query)
-
-        assert len(found) > 0, "no connector string found"
-
-        import dbqq
-
-        module = dbqq
-
-        name, cache_loc, cache_name, connector_string = found[0]
-
-        query = re.sub("--!\s+\w+\/.+\n+", "", query)
-
-        for m in connector_string.split("."):
-            module = getattr(module, m)
-
-        return name, query, module
+        raise "No connector string found"
 
 
-def tab(string, tab="    ", n=1):
+def tab(string: str, tab: str = "    ", n: int = 1):
     return "\n".join([n * tab + s for s in string.split("\n")])
 
 
@@ -141,21 +157,22 @@ def in_databricks():
 class CommonTableExpression:
     def __init__(self):
         self.queries = OrderedDict()
-        # self.queries[name] = query
         self.history = [self.queries]
 
-    def add_query(self, name, query):
+    def add_query(self, name: str, query: str):
         self.queries[name] = query
         self.history.append(self.queries)
+        return self
 
-    def rollback(self, version_no):
+    def rollback(self, version_no: int):
         self.history = self.history[: (version_no + 1)]
         self.queries = self.history[-1]
+        return self
 
-    def rollback_one(self):
+    def rollback_one(self) -> "CommonTableExpression":
         return self.rollback(len(self.history) - 1)
 
-    def generate(self):
+    def generate(self) -> str:
         output = "with\n"
         for i, (name, query) in enumerate(self.queries.items()):
             if i == 0:
@@ -164,7 +181,7 @@ class CommonTableExpression:
                 output += f"\n,\n{name} as (\n{tab(query)}\n)"
         return output
 
-    def __call__(self, query):
+    def __call__(self, query: str) -> str:
         return self.generate() + f"\n{query}"
 
     def __repr__(self) -> str:

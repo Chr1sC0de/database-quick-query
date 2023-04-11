@@ -7,30 +7,24 @@ from dbqq.security.functions import load_private_key, load_public_key
 
 @dataclass
 class RSA:
-
-    public_key : rsa.PublicKey = None
+    public_key: rsa.PublicKey = None
     private_key: rsa.PrivateKey = None
 
     @classmethod
     def from_folder(
         cls,
-        folder   : pt.Path,
-        pub_reg  : str = ".*public.*\.%s",
-        prv_reg  : str = ".*private.*\.%s",
-        # s_format : str = "pem"
+        folder: pt.Path,
+        pub_reg: str = ".*public.*\.%s",
+        prv_reg: str = ".*private.*\.%s",
     ) -> "RSA":
-
-        def check_format(fmt):
-            return fmt in ["pem", "der"]
-
         key_files = tuple(folder.glob("*"))
         key_files = [k for k in key_files if k.suffix in [".pem", ".der"]]
 
         for s_format in ["pem", "der"]:
-
             public_key_file = [
-                f for f in key_files if
-                    re.match(pub_reg%s_format, f.name) is not None
+                f
+                for f in key_files
+                if re.match(pub_reg % s_format, f.name) is not None
             ]
 
             if len(public_key_file) > 0:
@@ -39,14 +33,19 @@ class RSA:
                 public_key_file = None
 
             private_key_file = [
-                f for f in key_files if re.match(prv_reg%s_format, f.name) is not None]
+                f
+                for f in key_files
+                if re.match(prv_reg % s_format, f.name) is not None
+            ]
 
             if len(private_key_file) > 0:
                 private_key_file = private_key_file[0]
             else:
                 private_key_file = None
 
-            if any([k is not None for k in (public_key_file, private_key_file)]):
+            if any(
+                [k is not None for k in (public_key_file, private_key_file)]
+            ):
                 return cls.from_files(public_key_file, private_key_file)
 
         raise FileNotFoundError(
@@ -55,11 +54,8 @@ class RSA:
 
     @classmethod
     def from_files(
-        cls,
-        pub_file: pt.Path = None,
-        prv_file: pt.Path = None
+        cls, pub_file: pt.Path = None, prv_file: pt.Path = None
     ) -> "RSA":
-
         if pub_file is not None:
             public_key = load_public_key(pub_file)
         else:
