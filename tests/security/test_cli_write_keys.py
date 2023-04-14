@@ -26,8 +26,3 @@ def test_cli_write_keys():
 
 if __name__ == "__main__":
     test_cli_write_keys()
-
-
-"""
-dbqq-write-keys -k 1024 -l C:/Users/cmamo/Documents/python/dbqq/.scratch/keys -pbn public_key -prn private_key -f PEM
-"""
