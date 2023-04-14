@@ -1,12 +1,11 @@
 import urllib
 
-import connectorx as cx
+from ._polar_connector import PolarsConnector
 import polars as pl
 from rsa import DecryptionError
 from triple_quote_clean import TripleQuoteCleaner
 
 from ..utils import get_connector_details, inject_connector_classes
-from ._base import Base
 
 tqc = TripleQuoteCleaner(skip_top_lines=1)
 
@@ -53,7 +52,7 @@ def generic_type_mapper(type):
         return "UNIDENTIFIED"
 
 
-class _MSSQLBase(Base):
+class _MSSQLBase(PolarsConnector):
     connections = []
 
     def __init__(self, username, password, hostname, port, database):
@@ -64,23 +63,6 @@ class _MSSQLBase(Base):
             port,
             database,
         )
-
-    def close(self):
-        pass
-
-    def _run_query(
-        self, query: str, *args, return_type="polars", **kwargs
-    ) -> pl.LazyFrame:
-        try:
-            return cx.read_sql(
-                self.connection,
-                query,
-                *args,
-                return_type=return_type,
-                **kwargs,
-            ).lazy()
-        except RuntimeError:
-            raise RuntimeError(query)
 
     def describe_columns(self, table_name, **kwargs):
         query = (

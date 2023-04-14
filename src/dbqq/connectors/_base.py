@@ -38,19 +38,19 @@ class Base(ABC):
         return self(query, *args, **kwargs)
 
     def __call__(
-        self, query: str, *args, read_parquet_kwargs=None, **kwargs
+        self, query: str, *args, scan_parquet_kwargs=None, **run_query_kwargs
     ) -> pl.LazyFrame:
         self.query_info = self.QueryInfo(None, None)
 
         if self.to_cache:
             cached_df = self._load_from_cache(
-                query, read_parquet_kwargs=read_parquet_kwargs
+                query, scan_parquet_kwargs=scan_parquet_kwargs
             )
             if isinstance(cached_df, (pl.DataFrame, pl.LazyFrame)):
                 return cached_df
 
         start_time = datetime.now()
-        df = self._run_query(query, *args, **kwargs)
+        df = self._run_query(query, *args, **run_query_kwargs)
         end_time = datetime.now()
         df = self._post_query(df)
 
@@ -63,10 +63,14 @@ class Base(ABC):
         return df
 
     def _load_from_cache(
-        self, query: str, *args, read_parquet_kwargs: dict = None, **kwargs
+        self, query: str, *args, scan_parquet_kwargs: dict = None, **kwargs
     ) -> pl.LazyFrame:
-        if read_parquet_kwargs is None:
-            read_parquet_kwargs = {}
+        """
+        scan_parquet_kwargs are arguments which will be passed to
+        https://pola-rs.github.io/polars/py-polars/html/reference/api/polars.scan_parquet.html#polars-scan-parquet
+        """
+        if scan_parquet_kwargs is None:
+            scan_parquet_kwargs = {}
 
         def to_dt(x):
             return datetime.fromtimestamp(x)
@@ -102,7 +106,7 @@ class Base(ABC):
                     parquet_file = pt.Path(metadata[self.meta.PARQUETFILE])
                     if parquet_file.exists():
                         df = pl.scan_parquet(
-                            parquet_file, **read_parquet_kwargs
+                            parquet_file, **scan_parquet_kwargs
                         )
                         self.query_info.time_taken = metadata[
                             self.meta.TIMETAKEN

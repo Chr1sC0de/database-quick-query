@@ -5,7 +5,9 @@ class TestOracle:
     def test_infoserver_ret(self):
         connection = connectors.oracle.infoserver_gen()
 
-        df = connection.cache()("select * from mms.billingfees")
+        df = connection(
+            "select * from mms.billingfees fetch first 100 rows only"
+        )
 
         assert df is not None, "df is None"
 

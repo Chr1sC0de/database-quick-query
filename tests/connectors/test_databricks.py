@@ -10,10 +10,11 @@ class TestDatabricks:
     def test_dev_env(self):
         connection: connectors.databricks = connectors.databricks.dev()
         assert connection is not None, "connection is None"
-        df = connection.cache()(
+        df = connection(
             """--sql
                 select *
                 from  hive_metastore.dev5_trading_eds.fact_discount_curve
+                limit 100
             """
             >> tqc
         )
@@ -47,4 +48,4 @@ class TestDatabricks:
 
 if __name__ == "__main__":
     T = TestDatabricks()
-    T.test_cluster()
+    T.test_dev_env()

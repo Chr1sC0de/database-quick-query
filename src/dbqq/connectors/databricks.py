@@ -64,8 +64,15 @@ class _DatabricksBase(Base):
         )
         self.cursor = self.connection.cursor()
 
+    def __call__(self, query: str, scan_parquet_kwargs=None) -> pl.LazyFrame:
+        """
+        scan_parquet_kwargs are arguments which will be passed to
+        https://pola-rs.github.io/polars/py-polars/html/reference/api/polars.scan_parquet.html#polars-scan-parquet
+        """
+        return super().__call__(query, scan_parquet_kwargs=scan_parquet_kwargs)
+
     def _run_query(self, query, *args, **kwargs) -> pl.LazyFrame:
-        self.cursor.execute(query, *args, **kwargs)
+        self.cursor.execute(query)
         return pl.from_arrow(self.cursor.fetchall_arrow()).lazy()
 
     def close(self):
@@ -139,13 +146,6 @@ class Cluster(_DatabricksBase):
         except ImportError:
             self.spark = None
 
-    def _run_query(self, query, *args, **kwargs) -> pl.LazyFrame:
-        assert self.spark is not None, "spark attribute must be set"
-        df = self.spark.sql(query)
-        return pl.from_arrow(
-            pa.Table.from_batches(df._collect_as_arrow())
-        ).lazy()
-
     def _load_from_cache(*args, **kwargs) -> pl.LazyFrame:
         return
 
@@ -155,9 +155,7 @@ class Cluster(_DatabricksBase):
     def _cache_df(self):
         return
 
-    def __call__(
-        self, query: str, *args, read_parquet_kwargs=None, **kwargs
-    ) -> pl.LazyFrame:
+    def __call__(self, query: str, *args, **kwargs) -> pl.LazyFrame:
         self.query_info = self.QueryInfo(None, None)
 
         start_time = datetime.now()
@@ -169,6 +167,13 @@ class Cluster(_DatabricksBase):
         self.query_info.time_taken = (end_time - start_time).total_seconds()
 
         return df
+
+    def _run_query(self, query, **kwargs) -> pl.LazyFrame:
+        assert self.spark is not None, "spark attribute must be set"
+        df = self.spark.sql(query)
+        return pl.from_arrow(
+            pa.Table.from_batches(df._collect_as_arrow())
+        ).lazy()
 
 
 #! begin inject regex

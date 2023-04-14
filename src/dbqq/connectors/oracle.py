@@ -1,12 +1,9 @@
-import os
-
-import connectorx as cx
+from ._polar_connector import PolarsConnector
 import polars as pl
 from rsa import DecryptionError
 from triple_quote_clean import TripleQuoteCleaner
 
 from ..utils import get_connector_details, inject_connector_classes
-from ._base import Base
 
 tqc = TripleQuoteCleaner(skip_top_lines=1)
 
@@ -52,11 +49,11 @@ def generic_type_mapper(type):
         return "UNIDENTIFIED"
 
 
-class _OracleBase(Base):
+# class _OracleBase(Base):
+class _OracleBase(PolarsConnector):
     connections = []
 
     def __init__(self, username, password, hostname, port, database):
-        # self.con = 'oracle://username:password@server:port/database'
         self.connection = "oracle://%s:%s@%s:%s/%s" % (
             username,
             password,
@@ -64,26 +61,6 @@ class _OracleBase(Base):
             port,
             database,
         )
-
-    def _run_query(
-        self, query: str, *args, partition_num=None, **kwargs
-    ) -> pl.LazyFrame:
-        try:
-            if partition_num is None:
-                partition_num = os.cpu_count()
-            return cx.read_sql(
-                self.connection,
-                query,
-                *args,
-                return_type="polars",
-                partition_num=partition_num,
-                **kwargs,
-            ).lazy()
-        except RuntimeError:
-            raise RuntimeError(query)
-
-    def close(self):
-        return
 
     def describe_columns(self, table_name, owner=None, **kwargs):
         table_name = table_name.upper()

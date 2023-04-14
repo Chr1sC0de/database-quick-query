@@ -1,5 +1,6 @@
-from . import databricks, mssql, oracle
 from ._base import Base
+from ._polar_connector import PolarsConnector
+from . import databricks, mssql, oracle
 
 from pathlib import Path as _Path
 from typing import Tuple as _Tuple
@@ -25,4 +26,11 @@ def from_file(filepath: _Path) -> _Tuple[Base, str]:
     return connection, parsed.query
 
 
-__all__ = ["databricks", "mssql", "oracle", "Base", "from_file"]
+__all__ = [
+    "Base",
+    "PolarsConnector",
+    "databricks",
+    "mssql",
+    "oracle",
+    "from_file",
+]

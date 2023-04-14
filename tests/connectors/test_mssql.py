@@ -5,7 +5,7 @@ class TestMSSQL:
     def test_infoserver_ret(self):
         connection: connectors.mssql = connectors.mssql.mswmovp1()
 
-        df = connection.cache()("select top 1000 * from pfdb.elec.ppa_hh")
+        df = connection("select top 100 * from pfdb.elec.ppa_hh")
 
         assert df is not None, "df is None"
 
