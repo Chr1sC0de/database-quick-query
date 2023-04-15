@@ -2,5 +2,7 @@
 !.gitignore
 __pycache__
 *.egg-info
+*.pem
+*.der
 dist
 build
