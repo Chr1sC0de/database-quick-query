@@ -36,8 +36,6 @@ Example environment variable setup
 $env:DBQQ_PRIVATE_KEY = ".\private_key.pem" or ".\private_key.der" or "none"
 # path to connections, supports encrypted or flat yaml files
 $env:DBQQ_CONNECTORS = ".\connections.dbqq" or ".\connections.yaml"
-# make new connections on import
-$env:DBQQ_MAKE_CONNECTIONS = "true"
 ```
 
 ## Initialization
@@ -53,10 +51,10 @@ connection files
 #! end inject regex
 ```
 
-To initialize connections, simply import the package
+To initialize connections, simply install the package and run the command
 
 ```powershell
-python -c "import dbqq"
+dbqq-initialize-connectors
 ```
 
 As an example, after importing the package the configured connections should now

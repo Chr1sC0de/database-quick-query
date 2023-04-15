@@ -40,52 +40,38 @@ def get_connector_details(dev_path: pt.Path = None) -> Dict[str, str]:
 def inject_connector_classes(
     file_path: pt.Path, configs: dict, connector: str
 ):
-    make_connections = os.getenv("DBQQ_MAKE_CONNECTIONS", "true")
+    tqc = TripleQuoteCleaner()
 
-    if make_connections.lower() == "false":
-        make_connections = False
-    elif make_connections.lower() == "true":
-        make_connections = True
-    else:
-        raise ValueError(
-            "DBQQ_MAKE_CONNECTIONS must be either \
-                'true' of 'false' not %s"
-            % make_connections
-        )
+    connector_configs = configs[connector]
 
-    if make_connections:
-        tqc = TripleQuoteCleaner()
+    with open(file_path, "r") as f:
+        content = f.read()
 
-        connector_configs = configs[connector]
+    new_content = "\n#! begin inject regex\n\n"
 
-        with open(file_path, "r") as f:
-            content = f.read()
-
-        new_content = "\n#! begin inject regex\n\n"
-
-        for key in connector_configs.keys():
-            new_content += (
-                f"""
+    for key in connector_configs.keys():
+        new_content += (
+            f"""
                 class {key}(_general_connector):
                     source: str = '{key}'
             """
-                >> tqc
-            )
-
-            new_content += "\n\n"
-
-        new_content += "#! end inject regex"
-
-        replaced = re.sub(
-            "\n#! begin inject regex.*?#! end inject regex",
-            new_content,
-            content,
-            flags=re.S,
+            >> tqc
         )
 
-        if replaced != content:
-            with open(file_path, "w") as f:
-                f.write(replaced)
+        new_content += "\n\n"
+
+    new_content += "#! end inject regex"
+
+    replaced = re.sub(
+        "\n#! begin inject regex.*?#! end inject regex",
+        new_content,
+        content,
+        flags=re.S,
+    )
+
+    if replaced != content:
+        with open(file_path, "w") as f:
+            f.write(replaced)
 
 
 def parse_file(filepath: pt.Path, cache: bool = False) -> parsed.sql.Base:
@@ -98,11 +84,9 @@ def parse_file(filepath: pt.Path, cache: bool = False) -> parsed.sql.Base:
         return module
 
     def _parse_with_cache_and_date(found, query):
-        from datetime import datetime, timedelta
-
         name, cache_folder, date, connector_string = found[0]
         cache_folder = pt.Path(cache_folder)
-        date_lower_bound = eval(date)
+        date_lower_bound = eval("import datetime, timedelta;" + date)
         module = _get_module(connector_string)
         return parsed.sql.NameQueryModuleCacheDate(
             name, query, module, cache_folder, date_lower_bound

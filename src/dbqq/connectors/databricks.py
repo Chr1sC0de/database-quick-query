@@ -4,10 +4,9 @@ from datetime import datetime
 import polars as pl
 import pyarrow as pa
 from databricks import sql as databricks_sql
-from rsa import DecryptionError
 from triple_quote_clean import TripleQuoteCleaner
 
-from ..utils import get_connector_details, inject_connector_classes
+from ..utils import get_connector_details
 from ._base import Base
 
 tqc = TripleQuoteCleaner(skip_top_lines=1)
@@ -179,18 +178,3 @@ class Cluster(_DatabricksBase):
 #! begin inject regex
 
 #! end inject regex
-
-
-try:
-    configs = get_connector_details()
-
-    inject_connector_classes(__file__, configs, "databricks")
-
-except DecryptionError:
-    pass
-except AssertionError:
-    pass
-except TypeError:
-    pass
-except Exception as er:
-    raise er

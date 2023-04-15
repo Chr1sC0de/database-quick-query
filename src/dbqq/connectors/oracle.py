@@ -1,9 +1,8 @@
-from ._polar_connector import PolarsConnector
 import polars as pl
-from rsa import DecryptionError
+from ._polar_connector import PolarsConnector
 from triple_quote_clean import TripleQuoteCleaner
 
-from ..utils import get_connector_details, inject_connector_classes
+from ..utils import get_connector_details
 
 tqc = TripleQuoteCleaner(skip_top_lines=1)
 
@@ -155,18 +154,3 @@ class _general_connector(_OracleBase):
 #! begin inject regex
 
 #! end inject regex
-
-
-try:
-    configs = get_connector_details()
-
-    inject_connector_classes(__file__, configs, "oracle")
-
-except DecryptionError:
-    pass
-except AssertionError:
-    pass
-except TypeError:
-    pass
-except Exception as er:
-    raise er
