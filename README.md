@@ -16,6 +16,7 @@
         - [Connection With Cache](#connection-with-cache)
         - [Connection With Cache and Date Lower Bound](#connection-with-cache-and-date-lower-bound)
     - [Parsing Files](#parsing-files)
+    - [Jinja Templates](#jinja-templates)
   - [Common Table Expressions](#common-table-expressions)
     - [Rollback](#rollback)
   - [Databricks Development](#databricks-development)
@@ -354,6 +355,56 @@ enum = utils.parse_file("<path to file>")
 ```
 
 enums for parsed sql can be found in connectors.enums.parsed.sql
+
+### Jinja Templates
+
+We can parse jinja templates, let's say we have a template called `test_query.sql.j2`
+
+```jinja
+select
+{% for item in  columns %}
+{% if loop.last %}
+    {{ item }}
+{% else %}
+    {{ item }},
+{% endif %}
+{% endfor %}
+from
+  some.table
+```
+
+We can create a `RenderedTemplateLoader` from it using the following
+
+```python
+import dbqq.connectors as dbc
+
+conn = dbc.<source>.<conn>()
+
+rendered_template_loader = conn.render_template(
+    "test_query.sql.j2",
+    columns=[
+      "col1",
+      "col2",
+      "col3",
+      "col4"
+    ],
+)
+
+# will return a object that shows the renderedquery
+
+"""
+select
+  col1,
+  col2,
+  col3,
+  col4
+from
+  some.table
+"""
+
+table = rendered_template_loader.execute()
+
+```
 
 ## Common Table Expressions
 

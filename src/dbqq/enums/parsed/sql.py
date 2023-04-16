@@ -1,19 +1,23 @@
 import datetime
 import pathlib as pt
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ... import connectors
 
 
 @dataclass
 class Base:
     query: str
-    module: "dbqq.connectors.Base"
+    module: "connectors.Base"
 
 
 @dataclass
 class NameQueryModule:
     name: str
     query: str
-    module: "dbqq.connectors.Base"
+    module: "connectors.Base"
 
 
 class _CacheFileNameMixin:
@@ -26,7 +30,7 @@ class _CacheFileNameMixin:
 class NameQueryModuleCache(_CacheFileNameMixin):
     name: str
     query: str
-    module: "dbqq.connectors.Base"
+    module: "connectors.Base"
     cache_directory: pt.Path
 
 
@@ -34,6 +38,6 @@ class NameQueryModuleCache(_CacheFileNameMixin):
 class NameQueryModuleCacheDate(_CacheFileNameMixin):
     name: str
     query: str
-    module: "dbqq.connectors.Base"
+    module: "connectors.Base"
     cache_directory: pt.Path
     date_lower_bound: datetime.datetime

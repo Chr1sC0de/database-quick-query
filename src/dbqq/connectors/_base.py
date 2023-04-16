@@ -1,4 +1,5 @@
 import re
+import jinja2.nativetypes
 import yaml
 import polars as pl
 import pathlib as pt
@@ -10,6 +11,23 @@ from uuid import uuid1
 
 class Base(ABC):
     to_cache: bool = False
+
+    class RenderedTemplateLoader:
+        def __init__(self, query: str, connection: "Base"):
+            self.query = query
+            self.connection = connection
+
+        def execute(self, *args, **kwargs) -> pl.LazyFrame:
+            return self(*args, **kwargs)
+
+        def __call__(self, *args, **kwargs) -> pl.LazyFrame:
+            return self.connection(self.query, *args, **kwargs)
+
+        def __repr__(self):
+            output = f"<{self.__class__.__name__} object at {hex(id(self))}>\n"
+            output += f"with {repr(self.connection)}\n"
+            output += self.query
+            return output
 
     @dataclass
     class QueryInfo:
@@ -31,11 +49,30 @@ class Base(ABC):
         TIMETAKEN = "time_taken"
         PARQUETFILE = "parquet_file"
 
-    def from_file(self, filepath: pt.Path, *args, **kwargs):
+    def from_file(self, filepath: pt.Path, *args, **kwargs) -> pl.LazyFrame:
         with open(filepath, "r") as f:
             query = f.read().replace(";", "")
-            query = re.sub("--!.+\n", "")
+            query = re.sub("--!.+\n", "", query)
         return self(query, *args, **kwargs)
+
+    def render_template(
+        self, filepath: pt.Path, *args, **kwargs
+    ) -> "Base.RenderedTemplateLoader":
+        with open(filepath, "r") as f:
+            query = f.read().replace(";", "")
+            query = re.sub("--!.+\n", "", query)
+
+        environment = jinja2.nativetypes.NativeEnvironment(
+            trim_blocks=True, lstrip_blocks=True, autoescape=True
+        )
+
+        query = environment.from_string(query).render(*args, **kwargs)
+        return Base.RenderedTemplateLoader(query, self)
+
+    def execute(
+        self, *args, scan_parquet_kwargs=None, **run_query_kwargs
+    ) -> pl.LazyFrame:
+        return self(*args, scan_parquet_kwargs=None, **run_query_kwargs)
 
     def __call__(
         self, query: str, *args, scan_parquet_kwargs=None, **run_query_kwargs

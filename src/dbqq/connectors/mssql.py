@@ -108,4 +108,10 @@ class _general_connector(_MSSQLBase):
 
 #! begin inject regex
 
+class energyoffer_dev(_general_connector):
+    source: str = 'energyoffer_dev'
+
+class mswmovp1(_general_connector):
+    source: str = 'mswmovp1'
+
 #! end inject regex
