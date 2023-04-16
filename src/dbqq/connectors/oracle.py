@@ -153,28 +153,4 @@ class _general_connector(_OracleBase):
 
 #! begin inject regex
 
-class eot_dm(_general_connector):
-    source: str = 'eot_dm'
-
-class eot_prod1(_general_connector):
-    source: str = 'eot_prod1'
-
-class eot_uat1(_general_connector):
-    source: str = 'eot_uat1'
-
-class improd(_general_connector):
-    source: str = 'improd'
-
-class infoserver_gen(_general_connector):
-    source: str = 'infoserver_gen'
-
-class infoserver_gen_dev(_general_connector):
-    source: str = 'infoserver_gen_dev'
-
-class infoserver_ret(_general_connector):
-    source: str = 'infoserver_ret'
-
-class infoserver_ret_dev(_general_connector):
-    source: str = 'infoserver_ret_dev'
-
 #! end inject regex

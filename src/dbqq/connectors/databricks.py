@@ -177,16 +177,4 @@ class Cluster(_DatabricksBase):
 
 #! begin inject regex
 
-class dev(_general_connector):
-    source: str = 'dev'
-
-class preprod(_general_connector):
-    source: str = 'preprod'
-
-class prod(_general_connector):
-    source: str = 'prod'
-
-class test(_general_connector):
-    source: str = 'test'
-
 #! end inject regex
