@@ -11,6 +11,7 @@ from uuid import uuid1
 
 class Base(ABC):
     to_cache: bool = False
+    description_query: str = None
 
     class RenderedTemplateLoader:
         def __init__(self, query: str, connection: "Base"):

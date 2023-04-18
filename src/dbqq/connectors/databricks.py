@@ -45,8 +45,6 @@ def generic_type_mapper(type):
 
 
 class _DatabricksBase(Base):
-    connections = []
-
     def __new__(cls, *args, **kwargs):
         if "DATABRICKS_RUNTIME_VERSION" in os.environ.keys():
             conn = super().__new__(Cluster, *args, **kwargs)
@@ -83,6 +81,11 @@ class _DatabricksBase(Base):
 
         description: pl.LazyFrame = self(query)
 
+        self.description_query = (
+            query
+            + "\n-- the result of this query is post-processed with polars"
+        )
+
         description = (
             description.filter(pl.col("col_name").str.contains("^\#").is_not())
             .unique()
@@ -114,6 +117,7 @@ class _DatabricksBase(Base):
                     "DATA_LENGTH",
                     "DATA_PRECISION",
                     "DATA_SCALE",
+                    "GENERIC_TYPE",
                 ]
             )
         )

@@ -48,10 +48,7 @@ def generic_type_mapper(type):
         return "UNIDENTIFIED"
 
 
-# class _OracleBase(Base):
 class _OracleBase(PolarsConnector):
-    connections = []
-
     def __init__(self, username, password, hostname, port, database):
         self.connection = "oracle://%s:%s@%s:%s/%s" % (
             username,
@@ -61,7 +58,9 @@ class _OracleBase(PolarsConnector):
             database,
         )
 
-    def describe_columns(self, table_name, owner=None, **kwargs):
+    def describe_columns(
+        self, table_name, owner=None, **kwargs
+    ) -> pl.LazyFrame:
         table_name = table_name.upper()
 
         if owner is not None:
@@ -127,6 +126,8 @@ class _OracleBase(PolarsConnector):
             """
                 >> tqc
             )
+
+        self.description_query = query
 
         description = self(query, **kwargs)
 

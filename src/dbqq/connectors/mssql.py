@@ -52,8 +52,6 @@ def generic_type_mapper(type):
 
 
 class _MSSQLBase(PolarsConnector):
-    connections = []
-
     def __init__(self, username, password, hostname, port, database):
         self.connection = "mssql://%s:%s@%s:%s/%s" % (
             username,
@@ -78,6 +76,8 @@ class _MSSQLBase(PolarsConnector):
         """
             >> tqc
         )
+
+        self.description_query = query
 
         description = self(query, **kwargs)
 
