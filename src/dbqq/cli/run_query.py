@@ -34,20 +34,12 @@ parser.add_argument(
 )
 
 
-def _get_name(name: str) -> str:
-    if name == "_":
-        name = None
-    else:
-        name = "%s.parquet" % name
-
-
-arguments = parser.parse_args()
-
-
-def main():
+def run():
     arguments: ArgumentEnum
     connection: connectors.Base
     index: bool
+
+    arguments = parser.parse_args()
 
     file = arguments.file
     rows = arguments.rows
@@ -66,4 +58,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    run()
