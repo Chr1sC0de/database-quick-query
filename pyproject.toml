@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "dbqq"
 description = "quickly connect to and query databases"
-version = "1.3.2"
+version = "1.3.3"
 readme = "README.md"
 dependencies = [
   "tabulate",
@@ -35,9 +35,9 @@ authors = [
 "Bug Tracker" = "https://github.com/Chr1sC0de/database-quick-query/issues"
 
 [project.scripts]
-dbqq-write-keys = "dbqq.security.cli.write_keys:run"
-dbqq-encrypt-yaml = "dbqq.security.cli.encrypt_yaml:run"
-dbqq-decrypt-yaml = "dbqq.security.cli.decrypt_yaml:run"
 dbqq-run-sql = "dbqq.cli.run_query:run"
 dbqq-clean-connections = "dbqq.cli.clean_connections:run"
 dbqq-initialize-connections = "dbqq.cli.initialize_connections:run"
+dbqq-write-keys = "dbqq.security.cli.write_keys:run"
+dbqq-encrypt-yaml = "dbqq.security.cli.encrypt_yaml:run"
+dbqq-decrypt-yaml = "dbqq.security.cli.decrypt_yaml:run"

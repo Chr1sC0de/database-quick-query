@@ -8,7 +8,7 @@ parser: argparse.ArgumentParser = argparse.ArgumentParser(
 )
 
 parser.add_argument(
-    "--key_length", "-k", type=int, default=1024, help="the length of th key"
+    "--key_length", "-k", type=int, default=512, help="the length of th key"
 )
 
 parser.add_argument(
