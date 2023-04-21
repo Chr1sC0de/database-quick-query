@@ -7,16 +7,16 @@ from typing import Tuple as _Tuple
 
 
 def from_file(filepath: _Path) -> _Tuple[Base, str]:
-    from .. import utils, enums
+    from .. import utils, data
 
     parsed = utils.parse_file(filepath)
 
     connection_map = {
-        enums.parsed.sql.NameQueryModule: lambda: parsed.module(),
-        enums.parsed.sql.NameQueryModuleCache: lambda: parsed.module().cache(
+        data.parsed.sql.NameQueryModule: lambda: parsed.module(),
+        data.parsed.sql.NameQueryModuleCache: lambda: parsed.module().cache(
             directory=parsed.cache_directory, name=parsed.name
         ),
-        enums.parsed.sql.NameQueryModuleCacheDate: lambda: parsed.module().cache(
+        data.parsed.sql.NameQueryModuleCacheDate: lambda: parsed.module().cache(
             directory=parsed.cache_directory,
             name=parsed.name,
             date_lower_bound=parsed.date_lower_bound,

@@ -351,10 +351,10 @@ We might simply want to parse the files i.e. for automating tasks.
 ```python
 from dbqq import utils
 
-enum = utils.parse_file("<path to file>")
+data = utils.parse_file("<path to file>")
 ```
 
-enums for parsed sql can be found in connectors.enums.parsed.sql
+data for parsed sql can be found in connectors.data.parsed.sql
 
 ### Jinja Templates
 

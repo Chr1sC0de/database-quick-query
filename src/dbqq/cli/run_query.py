@@ -7,7 +7,7 @@ except ImportError:
     from dbqq import connectors
 
 
-class ArgumentEnum:
+class ArgumentData:
     file: pt.Path
     rows: str
     show_index: bool
@@ -35,7 +35,7 @@ parser.add_argument(
 
 
 def run():
-    arguments: ArgumentEnum
+    arguments: ArgumentData
     connection: connectors.Base
     index: bool
 

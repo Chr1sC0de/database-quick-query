@@ -10,7 +10,7 @@ from triple_quote_clean import TripleQuoteCleaner
 from .security.functions._functions import load_private_key
 from .security.functions._yaml import decrypt
 from .security.helpers import RSA
-from .enums import parsed
+from .data import parsed
 
 
 def get_connector_details(dev_path: pt.Path = None) -> Dict[str, str]:
