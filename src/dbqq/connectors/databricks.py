@@ -87,23 +87,25 @@ class _DatabricksBase(Base):
         )
 
         description = (
-            description.filter(pl.col("col_name").str.contains("^\#").is_not())
+            description.filter(
+                pl.col("col_name").str.contains(r"^\#").is_not()
+            )
             .unique()
             .rename({c: c.upper() for c in description.columns})
             .with_columns(pl.lit(None).alias("DATA_LENGTH"))
             .with_columns(
                 pl.col("DATA_TYPE")
-                .str.extract("[(](\d+),(\d+)[)]", 1)
+                .str.extract(r"[(](\d+),(\d+)[)]", 1)
                 .cast(pl.Int32)
                 .alias("DATA_PRECISION")
             )
             .with_columns(
                 pl.col("DATA_TYPE")
-                .str.extract("[(](\d+),(\d+)[)]", 2)
+                .str.extract(r"[(](\d+),(\d+)[)]", 2)
                 .cast(pl.Int32)
                 .alias("DATA_SCALE")
             )
-            .with_columns(pl.col("DATA_TYPE").str.extract("\w+", 0))
+            .with_columns(pl.col("DATA_TYPE").str.extract(r"\w+", 0))
             .with_columns(
                 pl.col("DATA_TYPE")
                 .apply(generic_type_mapper)

@@ -53,7 +53,7 @@ class Base(ABC):
     def from_file(self, filepath: pt.Path, *args, **kwargs) -> pl.LazyFrame:
         with open(filepath, "r") as f:
             query = f.read().replace(";", "")
-            query = re.sub("--!.+\n", "", query)
+            query = re.sub(r"--!.+\n", "", query)
         return self(query, *args, **kwargs)
 
     def render_template(
@@ -61,7 +61,7 @@ class Base(ABC):
     ) -> "Base.RenderedTemplateLoader":
         with open(filepath, "r") as f:
             query = f.read().replace(";", "")
-            query = re.sub("--!.+\n", "", query)
+            query = re.sub(r"--!.+\n", "", query)
 
         environment = jinja2.nativetypes.NativeEnvironment(
             trim_blocks=True, lstrip_blocks=True, autoescape=True

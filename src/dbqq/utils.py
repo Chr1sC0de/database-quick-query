@@ -63,7 +63,7 @@ def inject_connector_classes(
     new_content += "#! end inject regex"
 
     replaced = re.sub(
-        "\n#! begin inject regex.*?#! end inject regex",
+        r"\n#! begin inject regex.*?#! end inject regex",
         new_content,
         content,
         flags=re.S,
@@ -109,12 +109,12 @@ def parse_file(filepath: pt.Path, cache: bool = False) -> parsed.sql.Base:
         query = f.read()
 
     found_cache_with_date = re.findall(
-        "--!\s+(\w+)\/['\"](.+)['\"]\/(.+?)\/(.+)", query
+        r"--!\s+(\w+)\/['\"](.+)['\"]\/(.+?)\/(.+)", query
     )
-    found_cache = re.findall("--!\s+(.+?)\/['\"](.+)['\"]\/(.+)", query)
-    found_no_cache = re.findall("--!\s+(\w+)\/(.+)", query)
+    found_cache = re.findall(r"--!\s+(.+?)\/['\"](.+)['\"]\/(.+)", query)
+    found_no_cache = re.findall(r"--!\s+(\w+)\/(.+)", query)
 
-    query = re.sub("--!.+\n", "", query)
+    query = re.sub(r"--!.+\n", "", query)
 
     if len(found_cache_with_date) > 0:
         return _parse_with_cache_and_date(found_cache_with_date, query)

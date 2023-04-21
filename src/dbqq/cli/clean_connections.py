@@ -30,7 +30,7 @@ def run():
         new_content += "#! end inject regex"
 
         replaced = re.sub(
-            "\n#! begin inject regex.*?#! end inject regex",
+            r"\n#! begin inject regex.*?#! end inject regex",
             new_content,
             content,
             flags=re.S,

@@ -14,8 +14,8 @@ class RSA:
     def from_folder(
         cls,
         folder: pt.Path,
-        pub_reg: str = ".*public.*\.%s",
-        prv_reg: str = ".*private.*\.%s",
+        pub_reg: str = r".*public.*\.%s",
+        prv_reg: str = r".*private.*\.%s",
     ) -> "RSA":
         key_files = tuple(folder.glob("*"))
         key_files = [k for k in key_files if k.suffix in [".pem", ".der"]]
