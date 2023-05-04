@@ -140,7 +140,7 @@ class Base(ABC):
                 with open(yaml_file, "r") as f:
                     metadata = yaml.safe_load(f)
 
-                if query in metadata[self.meta.QUERY]:
+                if query == metadata[self.meta.QUERY]:
                     parquet_file = pt.Path(metadata[self.meta.PARQUETFILE])
                     if parquet_file.exists():
                         df = pl.scan_parquet(
