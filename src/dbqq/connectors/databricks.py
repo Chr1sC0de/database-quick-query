@@ -54,12 +54,11 @@ class _DatabricksBase(Base):
         return super().__new__(cls, *args, **kwargs)
 
     def __init__(self, hostname: str, http_path: str, access_token: str):
-        self.connection = databricks_sql.connect(
+        self.connection_kwargs = dict(
             server_hostname=hostname,
             http_path=http_path,
             access_token=access_token,
         )
-        self.cursor = self.connection.cursor()
 
     def __call__(self, query: str, scan_parquet_kwargs=None) -> pl.LazyFrame:
         """
@@ -69,12 +68,16 @@ class _DatabricksBase(Base):
         return super().__call__(query, scan_parquet_kwargs=scan_parquet_kwargs)
 
     def _run_query(self, query, *args, **kwargs) -> pl.LazyFrame:
+        self.connection = databricks_sql.connect(**self.connection_kwargs)
+        self.cursor = self.connection.cursor()
         self.cursor.execute(query)
-        return pl.from_arrow(self.cursor.fetchall_arrow()).lazy()
+        results = pl.from_arrow(self.cursor.fetchall_arrow()).lazy()
+        self.cursor.close()
+        self.connection.close()
+        return results
 
     def close(self):
-        self.connection.close()
-        self.cursor.close()
+        ...
 
     def describe_columns(self, table_name: str) -> pl.LazyFrame:
         query = f"describe {table_name}"
@@ -145,7 +148,7 @@ class _general_connector(_DatabricksBase):
 class Cluster(_DatabricksBase):
     def __init__(self, *args, **kwargs):
         try:
-            from pyspark.sql import SparkSession
+            from pyspark.sql import SparkSession  # type: ignore
 
             self.spark = SparkSession.builder.getOrCreate()
         except ImportError:

@@ -73,7 +73,9 @@ class Base(ABC):
     def execute(
         self, *args, scan_parquet_kwargs=None, **run_query_kwargs
     ) -> pl.LazyFrame:
-        return self(*args, scan_parquet_kwargs=None, **run_query_kwargs)
+        return self(
+            *args, scan_parquet_kwargs=scan_parquet_kwargs, **run_query_kwargs
+        )
 
     def __call__(
         self, query: str, *args, scan_parquet_kwargs=None, **run_query_kwargs
@@ -220,3 +222,12 @@ class Base(ABC):
     @abstractmethod
     def close(self):
         ...
+
+    def get_database(self) -> str:
+        return self.__module__.split(".")[-1]
+
+    def get_name(self) -> str:
+        return self.__class__.__name__.split(".")[-1]
+
+    def get_db_name(self) -> str:
+        return f"{self.get_database()}-{self.get_name()}"
