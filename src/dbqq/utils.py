@@ -13,11 +13,31 @@ from .security.helpers import RSA
 from .data import parsed
 
 
+def get_ssm_connector_details(name: str, region: str = "ap-southeast-2"):
+    import boto3
+    import yaml
+
+    client = boto3.client("ssm", region_name=region)
+    parameter = client.get_parameter(Name=name, WithDecryption=True)[
+        "Parameter"
+    ]["Value"]
+    return yaml.safe_load(parameter)
+
+
 def get_connector_details(dev_path: pt.Path = None) -> Dict[str, str]:
+    ssm_name = os.getenv("DBQQ_SSM_NAME", None)
+    ssm_region = os.getenv("DBQQ_SSM_REGION", "ap-southeast-2")
+    connector_path = os.getenv("DBQQ_CONNECTORS", None)
     if dev_path is not None:
         connector_file = pt.Path(dev_path)
+    elif ssm_name is not None:
+        return get_ssm_connector_details(ssm_name, region=ssm_region)
     else:
-        connector_file = pt.Path(os.getenv("DBQQ_CONNECTORS"))
+        try:
+            connector_file = pt.Path(connector_path)
+        except TypeError as type_error:
+            print("DBQQ_CONNECTORS environment variable not set")
+            raise type_error
     assert connector_file.exists(), "%s does not exist" % connector_file
 
     if connector_file.suffix == ".yaml":

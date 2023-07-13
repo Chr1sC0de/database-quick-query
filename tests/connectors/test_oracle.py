@@ -1,7 +1,12 @@
 from dbqq import connectors
+import pytest
 
 
 class TestOracle:
+    @pytest.mark.skipif(
+        condition=not hasattr(connectors.oracle, "infoserver_gen"),
+        reason="mswmovp1 must exist",
+    )
     def test_infoserver_ret(self):
         connection = connectors.oracle.infoserver_gen()
 

@@ -1,5 +1,5 @@
+import pytest
 import yaml
-import subprocess
 from dbqq.security.functions import yaml as yamled
 from dbqq.utils import get_connector_details
 from dbqq.security import helpers
@@ -10,17 +10,8 @@ except ImportError:
     from shared import db_connectors_yaml, key_folder, encrypted_file
 
 
+@pytest.mark.depends(on=["test_cli_write_keys.py::test_cli_write_keys"])
 def test_get_connector_details():
-    subprocess.run(
-        f"dbqq-write-keys \
-            -k 1024 \
-            -l {key_folder} \
-            -pbn public_key \
-            -prn private_key \
-            -f PEM \
-        "
-    )
-
     rsa_helper = helpers.RSA.from_folder(key_folder)
 
     with open(db_connectors_yaml, "r") as f:

@@ -1,4 +1,7 @@
-import subprocess
+import dbqq.security.cli.encrypt_yaml
+import sys
+from unittest import mock
+import pytest
 
 import yaml
 
@@ -25,33 +28,34 @@ with open(db_connectors_yaml, "r") as f:
 
 encrypted_file.unlink(missing_ok=True)
 
-subprocess.run(
-    f"dbqq-encrypt-yaml \
-        {db_connectors_yaml} \
-        {public_key_file} \
-        -l {encrypted_file}\
-    "
-)
 
-
-class TestEncryptKeys:
+@pytest.mark.depends(name="test_cli_write_keys.py::test_cli_write_keys")
+def test_encrypt_file():
     rsa_helper = RSA.from_folder(key_folder)
     config = contents
 
-    def test_encrypt_file(self):
-        encrypted = dbs.yaml.encrypt(db_connectors_yaml, self.rsa_helper)
+    with mock.patch.object(
+        sys,
+        "argv",
+        [
+            __file__,
+            f"{db_connectors_yaml.resolve()}",
+            f"{public_key_file.resolve()}",
+            f"-l={encrypted_file.resolve()}",
+        ],
+    ):
+        dbqq.security.cli.encrypt_yaml.run()
 
-        encrypted.dump(encrypted_file)
+    encrypted = dbs.yaml.encrypt(db_connectors_yaml, rsa_helper)
 
-        result = dbs.yaml.decrypt(encrypted_file, self.rsa_helper)
+    encrypted.dump(encrypted_file)
 
-        assert (
-            result == self.config
-        ), "decrypted dictionary is not equal original"
+    result = dbs.yaml.decrypt(encrypted_file, rsa_helper)
 
-        return
+    assert result == config, "decrypted dictionary is not equal original"
+
+    return
 
 
 if __name__ == "__main__":
-    T = TestEncryptKeys()
-    T.test_encrypt_file()
+    test_encrypt_file()

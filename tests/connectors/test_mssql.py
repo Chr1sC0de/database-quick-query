@@ -1,6 +1,11 @@
 from dbqq import connectors
+import pytest
 
 
+@pytest.mark.skipif(
+    condition=not hasattr(connectors.mssql, "mswmovp1"),
+    reason="mswmovp1 must exist",
+)
 class TestMSSQL:
     def test_infoserver_ret(self):
         connection: connectors.mssql = connectors.mssql.mswmovp1()

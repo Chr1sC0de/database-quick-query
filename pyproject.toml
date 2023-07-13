@@ -1,41 +1,45 @@
-[build-system]
-requires      = ["setuptools"]
-build-backend = "setuptools.build_meta"
-
-[project]
-name = "dbqq"
-description = "quickly connect to and query databases"
-version = "1.4.0"
+[tool.poetry]
+name = "database-quick-query"
+version = "0.0.0"
+description = ""
+authors = ["Chris.Mamon <chrisam1993@live.com>"]
+license = "MIT"
 readme = "README.md"
-dependencies = [
-  "tabulate",
-  "rsa",
-  "pyaml",
-  "polars",
-  "databricks-sql-connector",
-  "pyarrow",
-  "connectorx",
-  "triple-quote-clean",
-  "jinja2"
-]
-classifiers = [
-  "License :: OSI Approved :: MIT License",
-  "Programming Language :: Python",
-  "Programming Language :: Python :: 3.7",
-  "Programming Language :: Python :: 3.8",
-  "Programming Language :: Python :: 3.9",
-  "Programming Language :: Python :: 3.10",
-  "Programming Language :: Python :: 3.11",
-]
-authors = [
-    {name = "Chris Mamon", email="chrisam1993@live.com"}
+packages = [{include = "dbqq", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+tabulate = "^0.9.0"
+rsa = "^4.9"
+polars = "^0.18.7"
+connectorx = "^0.3.1"
+triple-quote-clean = "^1.1.0"
+jinja2 = "^3.1.2"
+pyarrow = "^12.0.1"
+databricks-sql-connector = "^2.7.0"
+pyaml = "^23.7.0"
+boto3 = "^1.28.2"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.0"
+pylint = "^2.17.4"
+isort = "^5.12.0"
+black = "^23.7.0"
+pytest-depends = "^1.0.1"
+
+[tool.poetry-dynamic-versioning]
+enable = true
+
+[build-system]
+requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning"]
+build-backend = "poetry_dynamic_versioning.backend"
+
+[tool.poetry-dynamic-versioning.substitution]
+folders = [
+  { path = "src" }
 ]
 
-[project.urls]
-"Homepage" = "https://github.com/Chr1sC0de/database-quick-query"
-"Bug Tracker" = "https://github.com/Chr1sC0de/database-quick-query/issues"
-
-[project.scripts]
+[tool.poetry.scripts]
 dbqq-run-sql = "dbqq.cli.run_query:run"
 dbqq-clean-connections = "dbqq.cli.clean_connections:run"
 dbqq-initialize-connections = "dbqq.cli.initialize_connections:run"

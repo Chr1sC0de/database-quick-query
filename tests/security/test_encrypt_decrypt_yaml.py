@@ -1,5 +1,5 @@
+import pytest
 import yaml
-import subprocess
 import dbqq.security.functions as dbs
 from dbqq.security.helpers import RSA
 
@@ -11,56 +11,50 @@ except ImportError:
 with open(db_connectors_yaml, "r") as f:
     contents = yaml.safe_load(f)
 
-subprocess.run(
-    f"dbqq-write-keys \
-        -k 1024 \
-        -l {key_folder} \
-        -pbn public_key \
-        -prn private_key \
-        -f PEM \
-    "
-)
-
 
 class TestEncryptDecrypt:
-    rsa_helper = RSA.from_folder(key_folder)
-    config = contents
-
+    @pytest.mark.depends(name="test_cli_write_keys.py::test_cli_write_keys")
     def test_encrypt_dictionary(self):
-        encrypted = dbs.yaml.encrypt(self.config, self.rsa_helper)
+        rsa_helper = RSA.from_folder(key_folder)
+        config = contents
+        encrypted = dbs.yaml.encrypt(config, rsa_helper)
 
-        decrypted = dbs.yaml.decrypt(encrypted, self.rsa_helper)
+        decrypted = dbs.yaml.decrypt(encrypted, rsa_helper)
 
         encrypted.dump(encrypted_file)
 
         assert (
-            self.config == decrypted
+            config == decrypted
         ), "decrypted dictionary is not equal original"
 
         return
 
+    @pytest.mark.depends(name="test_cli_write_keys.py::test_cli_write_keys")
     def test_encrypt_file(self):
-        encrypted = dbs.yaml.encrypt(db_connectors_yaml, self.rsa_helper)
-        decrypted = dbs.yaml.decrypt(encrypted, self.rsa_helper)
+        rsa_helper = RSA.from_folder(key_folder)
+        config = contents
+        encrypted = dbs.yaml.encrypt(db_connectors_yaml, rsa_helper)
+        decrypted = dbs.yaml.decrypt(encrypted, rsa_helper)
 
         encrypted.dump(encrypted_file)
 
         assert (
-            self.config == decrypted
+            config == decrypted
         ), "decrypted dictionary is not equal original"
 
         return
 
+    @pytest.mark.depends(name="test_cli_write_keys.py::test_cli_write_keys")
     def test_decrypt_file(self):
-        encrypted = dbs.yaml.encrypt(db_connectors_yaml, self.rsa_helper)
+        rsa_helper = RSA.from_folder(key_folder)
+        config = contents
+        encrypted = dbs.yaml.encrypt(db_connectors_yaml, rsa_helper)
 
         encrypted.dump(encrypted_file)
 
-        result = dbs.yaml.decrypt(encrypted_file, self.rsa_helper)
+        result = dbs.yaml.decrypt(encrypted_file, rsa_helper)
 
-        assert (
-            result == self.config
-        ), "decrypted dictionary is not equal original"
+        assert result == config, "decrypted dictionary is not equal original"
 
         return
 
