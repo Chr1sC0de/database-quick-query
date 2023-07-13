@@ -4,6 +4,7 @@
   - [Environment Variables](#environment-variables)
   - [Initialization](#initialization)
   - [Connection Configuration](#connection-configuration)
+    - [Parameter Stores](#parameter-stores)
   - [Encrypting Configs](#encrypting-configs)
     - [Creating Private and Public Keys](#creating-private-and-public-keys)
     - [Encrypting The Configuration File](#encrypting-the-configuration-file)
@@ -37,6 +38,8 @@ Example environment variable setup
 $env:DBQQ_PRIVATE_KEY = ".\private_key.pem" or ".\private_key.der" or "none"
 # path to connections, supports encrypted or flat yaml files
 $env:DBQQ_CONNECTORS = ".\connections.dbqq" or ".\connections.yaml"
+# if we have aws parameter store configuration
+$env:DBQQ_SSM_NAME= "name of parameter"
 ```
 
 ## Initialization
@@ -144,10 +147,16 @@ oracle:
     username: "*******"
 ```
 
-> [!todo]
->
-> add an option to allow users to access private keys from key vault
-> this way no private keys are stored locally only an api key
+### Parameter Stores
+
+Parameters can be extracted from aws parameter store, parameter store overrides
+local configs. To set the get the parameters set the name and the region, by
+default the region is `ap-southeast-2`
+
+```powershell
+$env:DBQQ_SSM_NAME="name"
+$env:DBQQ_SSM_REGION="region"
+```
 
 ## Encrypting Configs
 
