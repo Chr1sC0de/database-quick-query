@@ -149,9 +149,11 @@ oracle:
 
 ### Parameter Stores
 
-Parameters can be extracted from aws parameter store, parameter store overrides
-local configs. To set the get the parameters set the name and the region, by
-default the region is `ap-southeast-2`
+Parameters can be extracted from the AWS Parameter Store, which overrides local
+configs. To retrieve the parameters, set the `name` and the `region`. By default,
+the region is set to `ap-southeast-2``.
+
+
 
 ```powershell
 $env:DBQQ_SSM_NAME="name"
