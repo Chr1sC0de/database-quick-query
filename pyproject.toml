@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "database-quick-query"
+name = "dbqq"
 version = "0.0.0"
 description = ""
 authors = ["Chris.Mamon <chrisam1993@live.com>"]
