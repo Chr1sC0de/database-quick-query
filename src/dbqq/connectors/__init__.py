@@ -1,6 +1,6 @@
 from ._base import Base
 from ._polar_connector import PolarsConnector
-from . import databricks, mssql, oracle
+from . import databricks, mssql, oracle, redshift
 
 from pathlib import Path as _Path
 from typing import Tuple as _Tuple
@@ -33,4 +33,5 @@ __all__ = [
     "mssql",
     "oracle",
     "from_file",
+    "redshift",
 ]

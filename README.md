@@ -145,6 +145,19 @@ oracle:
     port: "*******"
     role: "*******"
     username: "*******"
+redshift:
+  conn1:
+    database: "*******"
+    hostname: "*******"
+    password: "*******"
+    port: "*******"
+    username: "*******"
+  conn2:
+    database: "*******"
+    hostname: "*******"
+    password: "*******"
+    port: "*******"
+    username: "*******"
 ```
 
 ### Parameter Stores
@@ -218,7 +231,7 @@ Finally secure the private key
 ## Connectors
 
 The connectors module reads from the configuration files, categorizing the
-details into (currently) either an `oracle`, `mssql` or `databricks` connection.
+details into (currently) either an `oracle`, `mssql`, `databricks`, `redshift` connection.
 
 Given our example configuration file we can create an `oracle` to db `conn1` by
 calling:

@@ -14,10 +14,19 @@ def run():
 
     configs = get_connector_details()
 
-    for filename in ["databricks", "mssql", "oracle"]:
+    for filename in ["databricks", "mssql", "oracle", "redshift"]:
         try:
             inject_connector_classes(
                 connector_dir / ("%s.py" % filename), configs, filename
+            )
+            print(
+                "Connection details found for ",
+                filename,
+                "generating connections",
+            )
+            print(
+                "Finished generating connection details found for ",
+                filename,
             )
         except KeyError:
             print("No", filename, "connection details found, skipping")
