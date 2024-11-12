@@ -1,10 +1,11 @@
 import urllib
+from typing import Optional
 
-from ._polar_connector import PolarsConnector
 import polars as pl
 from triple_quote_clean import TripleQuoteCleaner
 
 from ..utils import get_connector_details
+from ._polar_connector import PolarsConnector
 
 tqc = TripleQuoteCleaner(skip_top_lines=1)
 
@@ -52,14 +53,33 @@ def generic_type_mapper(type):
 
 
 class _MSSQLBase(PolarsConnector):
-    def __init__(self, username, password, hostname, port, database):
-        self.connection = "mssql://%s:%s@%s:%s/%s" % (
-            username,
-            urllib.parse.quote_plus(password),
-            hostname,
-            port,
-            database,
-        )
+    def __init__(
+        self,
+        username: Optional[str] = None,
+        password: Optional[str] = None,
+        hostname: Optional[str] = None,
+        port: Optional[str] = None,
+        database: Optional[str] = None,
+        trusted_connection: Optional[bool] = None,
+        server: Optional[str] = None,
+        driver: Optional[str] = None,
+    ):
+        if all([v is not None for v in [username, password, hostname, port, database]]):
+            self.connection = "mssql://%s:%s@%s:%s/%s" % (
+                username,
+                urllib.parse.quote_plus(password),
+                hostname,
+                port,
+                database,
+            )
+        if trusted_connection and all([v is not None for v in [server, driver]]):
+            self.connection = (
+                f"Driver={driver};\nTrusted_Connection=yes;\nServer={server}"
+            )
+            if database is not None:
+                self.connection += f"\n{database};"
+
+            self.run_mode = "read_database"
 
     def describe_columns(self, table_name, **kwargs):
         query = (
@@ -81,14 +101,10 @@ class _MSSQLBase(PolarsConnector):
 
         description = self(query, **kwargs)
 
-        description = description.rename(
-            {c: c.upper() for c in description.columns}
-        )
+        description = description.rename({c: c.upper() for c in description.columns})
 
         description = description.with_columns(
-            pl.col("DATA_TYPE")
-            .apply(generic_type_mapper)
-            .alias("GENERIC_TYPE")
+            pl.col("DATA_TYPE").apply(generic_type_mapper).alias("GENERIC_TYPE")
         )
 
         return description
@@ -102,8 +118,7 @@ class _general_connector(_MSSQLBase):
         configs = get_connector_details()
         mssql_configs = configs["mssql"]
         connector_config = mssql_configs[self.source]
-        args = [connector_config[key] for key in self.targets]
-        super().__init__(*args)
+        super().__init__(**connector_config)
 
 
 #! begin inject regex

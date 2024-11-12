@@ -7,6 +7,8 @@ from typing import Tuple
 
 
 class PolarsConnector(Base):
+    run_mode = "read_sql"
+
     def __call__(
         self,
         query: str,
@@ -38,21 +40,33 @@ class PolarsConnector(Base):
         partition_on: str = None,
         partition_range: Tuple[int, int] = None,
         partition_num: int = None,
+        login_timeout_sec: int = 150,
+        **kwargs,
     ) -> pl.LazyFrame:
         try:
             if partition_num is None:
                 partition_num = os.cpu_count()
 
-            return cx.read_sql(
-                self.connection,
-                query,
-                *args,
-                return_type="polars",
-                partition_num=partition_num,
-                protocol=protocol,
-                partition_on=partition_on,
-                partition_range=partition_range,
-            ).lazy()
+            if self.run_mode == "read_sql":
+                return cx.read_sql(
+                    self.connection,
+                    query,
+                    *args,
+                    return_type="polars",
+                    partition_num=partition_num,
+                    protocol=protocol,
+                    partition_on=partition_on,
+                    partition_range=partition_range,
+                    **kwargs,
+                ).lazy()
+            elif self.run_mode == "read_database":
+                return pl.read_database(
+                    query,
+                    self.connection,
+                    execute_options={"login_timeout_sec": login_timeout_sec},
+                    **kwargs,
+                ).lazy()
+
         except RuntimeError:
             raise RuntimeError(query)
 
