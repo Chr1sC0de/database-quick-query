@@ -119,13 +119,14 @@ mssql:
     port: "*******"
     username: "*******"
   conn2:
-    authentication_type: "*******"
-    database: "*******"
-    driver: "*******"
-    hostname: "*******"
-    password: "*******"
-    port: "*******"
-    username: "*******"
+    trusted_connection: true
+    server: "*****"
+    driver: "{*****}"
+  conn3:
+    trusted_connection: true
+    server: "*****"
+    driver: "{*****}"
+    database: "*****"
 oracle:
   conn1:
     authentication_type: "*******"
@@ -165,8 +166,6 @@ redshift:
 Parameters can be extracted from the AWS Parameter Store, which overrides local
 configs. To retrieve the parameters, set the `name` and the `region`. By default,
 the region is set to `ap-southeast-2``.
-
-
 
 ```powershell
 $env:DBQQ_SSM_NAME="name"
